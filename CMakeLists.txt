@@ -8,11 +8,9 @@ project(${PROJECT_NAME} VERSION 0.1 LANGUAGES C)
 
 add_executable(${PROJECT_NAME}
     "src/main.c"
-    "src/lua_utility.c"
     "src/lua_fs.c"
 
     "include/lua_bytecode.h"
-    "include/lua_utility.h"
     "include/lua_fs.h"
     
     "src/lua/main.lua"
