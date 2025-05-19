@@ -1,0 +1,78 @@
+#define EXIT_SUCCESS 0
+#define EXIT_FAILURE -1
+#define PI 3.14
+#define NICE 69.0
+#define DANK 420.0
+
+// 'const' in classyc is simillar to 'constexpr' in c++
+// every variable/reference/pointer is immutable by default.
+// if you want a mutable variable/reference/pointer use 'mut'
+//  example: 'i32      iA   = 69;'  an immutable variable;
+//           'mut i32  iB   = 420;' a mutable variable;
+//           'i32&     refA = iA;'  a reference to an immutable variable;
+//           'mut i32& refB = iB;'  a reference to a mutable variable;
+
+namespace std {
+    // namespace template
+    namespace[@T] is_floating_point {
+        const bool value = false;
+    }
+
+    // namespace template specialization
+    namespace[] is_floating_point[f32] {
+        const bool value = true;
+    }
+
+    // namespace template specialization
+    namespace[] is_floating_point[f64] {
+        const bool value = true;
+    }
+
+    // constant value template
+    const[@T] is_floating_point_v =
+        is_floating_point[T].value;
+}
+
+namespace c { // valid only for x86_64 gcc/clang
+    alias char      = i8;
+    alias short     = i16;
+    alias ushort    = u16;
+    alias int       = i32;
+    alias uint      = u32;
+    alias long      = i64;
+    alias ulong     = u64;
+    alias float     = f32;
+    alias double    = f64;
+
+    // same as 'import("printf") func printf() '
+    import func printf(char*, ...) -> int;  // means "import linker symbol 'printf'
+                                            // as the function 'printf'
+                                            // in the current namespace"
+}
+
+// function template
+// @T       typename template parameter
+// @(cond)  template constraint, accepts a single constant boolean expression
+func[@T, @(std.is_floating_point_v[T])]
+CircleArea(T fRadius) -> T {
+    return (T)$PI * fRadius * fRadius;
+}
+
+// same as 'export("main") func main() '
+export func main() -> c.int {   // means "export function 'main'
+                                // from the current namespace
+                                // as the linker symbol 'main'"
+    c.float
+        fCircleRadius   = $NICE;
+    c.float
+        fCircleArea     = CircleArea[](fCircleRadius);  // same as CircleArea[typeof(fCircleRadius)](fCircleRadius);
+
+    c.printf("Hello, world!\n");
+    c.printf("%f %f\n", fCircleRadius, fCircleArea);
+    c.printf("%s %i\n", $FILE, $LINE)
+
+    if (fCircleArea < $DANK)
+        return $EXIT_SUCCESS;
+    else
+        return $EXIT_FAILURE;
+}

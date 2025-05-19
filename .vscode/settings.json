@@ -1,0 +1,7 @@
+{
+    "Lua.workspace.library": [
+        "${addons}/lpeg/module/library",
+        "${workspaceFolder}/lua/meta"
+    ],
+    "Lua.workspace.checkThirdParty": false
+}

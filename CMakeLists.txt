@@ -1,0 +1,67 @@
+cmake_minimum_required(VERSION 3.31)
+
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+
+set(PROJECT_NAME "classyc")
+project(${PROJECT_NAME} VERSION 0.1 LANGUAGES C)
+
+add_executable(${PROJECT_NAME}
+    "src/main.c"
+    "src/lua_utility.c"
+    "src/lua_fs.c")
+target_include_directories(${PROJECT_NAME}
+    PRIVATE
+        "include/"
+        SYSTEM "/usr/include/luajit-2.1")
+target_link_directories(${PROJECT_NAME}
+    PRIVATE
+        "/usr/lib")
+target_link_libraries(${PROJECT_NAME}
+    PRIVATE
+        luajit-5.1)
+
+set(LUAJIT_CLI_PATH /usr/bin/luajit)
+if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+    set(LUAJIT_ARGS -b -g -t h)
+else()
+    set(LUAJIT_ARGS -b -s -t h)
+endif()
+
+add_custom_target(CompileLua
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    COMMAND ${LUAJIT_CLI_PATH} ${LUAJIT_ARGS} -n "log"
+        "lua/log.lua" "include/bytecode/log.h"
+    COMMAND ${LUAJIT_CLI_PATH} ${LUAJIT_ARGS} -n "oop"
+        "lua/oop.lua" "include/bytecode/oop.h"
+    COMMAND ${LUAJIT_CLI_PATH} ${LUAJIT_ARGS} -n "main"
+        "lua/main.lua" "include/bytecode/main.h"
+    COMMAND ${LUAJIT_CLI_PATH} ${LUAJIT_ARGS} -n "Preprocessor"
+        "lua/Preprocessor.lua" "include/bytecode/Preprocessor.h"
+    COMMAND ${LUAJIT_CLI_PATH} ${LUAJIT_ARGS} -n "Preprocessor.IMacro"
+        "lua/Preprocessor/IMacro.lua" "include/bytecode/Preprocessor/IMacro.h"
+    COMMAND ${LUAJIT_CLI_PATH} ${LUAJIT_ARGS} -n "Preprocessor.MacroDefined"
+        "lua/Preprocessor/MacroDefined.lua" "include/bytecode/Preprocessor/MacroDefined.h"
+    COMMAND ${LUAJIT_CLI_PATH} ${LUAJIT_ARGS} -n "Preprocessor.MacroBuiltin"
+        "lua/Preprocessor/MacroBuiltin.lua" "include/bytecode/Preprocessor/MacroBuiltin.h")
+add_dependencies(${PROJECT_NAME}
+    CompileLua)
+
+target_compile_definitions(${PROJECT_NAME}
+    PRIVATE
+        CLC_VERSION="ClassyC ${CMAKE_PROJECT_VERSION}"
+        CC_VERSION="${CMAKE_C_COMPILER_ID} ${CMAKE_C_COMPILER_VERSION}"
+        BUILD_TYPE="${CMAKE_BUILD_TYPE}")
+
+if (${CMAKE_C_COMPILER_ID} STREQUAL "GNU" OR ${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
+    message("Using ${CMAKE_C_COMPILER_ID} c compiler")
+    target_compile_options(${PROJECT_NAME}
+        PRIVATE
+            "-Wall"
+            "-Wextra"
+            "-Wconversion"
+            "-Werror"
+            "-Wno-unused-parameter")
+else()
+    message(FATAL_ERROR "Usupported c compiler (supported: gcc, clang)")
+endif()
