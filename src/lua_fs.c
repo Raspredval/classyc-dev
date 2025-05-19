@@ -2,6 +2,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <libgen.h>
+#include <dirent.h>
 #include <limits.h>
 #include <assert.h>
 
@@ -31,7 +32,29 @@ static int
 lua_access(lua_State* L);
 
 static int
+lua_opendir(lua_State* L);
+
+static int
+lua_closedir(lua_State* L);
+
+static int
+lua_readdir(lua_State* L);
+
+static int
+lua_readdir_iterator(lua_State* L);
+
+static int
+lua_seekdir(lua_State* L);
+
+static int
+lua_telldir(lua_State* L);
+
+static int
+lua_rewinddir(lua_State* L);
+
+static int
 lua_load_fs(lua_State* L);
+
 
 static char
     szPathBuffer[PATH_MAX + 1] = "";
@@ -42,16 +65,30 @@ PreloadFilesystemAPI(lua_State* L) {
 
     lua_getglobal(L, "package");
     lua_getfield(L, -1, "preload");
-    
     lua_pushcfunction(L, lua_load_fs);
     lua_setfield(L, -2, "fs");
-
     lua_settop(L, -3);
 }
 
 static int
 lua_load_fs(lua_State* L) {
     assert(L);
+
+    luaL_newmetatable(L, "Directory");
+    lua_pushnil(L);
+    lua_copy(L, -2, -1);
+    lua_setfield(L, -2, "__index");
+    luaL_Reg
+        lpDirectoryFuncs[] = {
+            { "readdir",    lua_readdir     },
+            { "rewinddir",  lua_rewinddir   },
+            { "seekdir",    lua_seekdir     },
+            { "telldir",    lua_telldir     },
+            { "__gc",       lua_closedir    },
+            { NULL,         NULL            }
+        };
+    luaL_setfuncs(L, lpDirectoryFuncs, 0);
+    lua_settop(L, -2);
 
     luaL_Reg
         lpLibFuncs[] = {
@@ -61,9 +98,9 @@ lua_load_fs(lua_State* L) {
             { "basename",   lua_basename },
             { "dirname",    lua_dirname  },
             { "access",     lua_access   },
+            { "opendir",    lua_opendir  },
             { NULL,         NULL         }
         };
-
     luaL_newlib(L, lpLibFuncs);
     return 1;
 }
@@ -128,7 +165,7 @@ lua_dirname(lua_State* L) {
     if (szDirname)
         lua_pushstring(L, szDirname);
     else
-        lua_pushnil(L);
+        luaL_error(L, "failed to get file directory from path: %s", szPath);
     return 1;
 }
 
@@ -145,7 +182,8 @@ lua_basename(lua_State* L) {
     if (szBasename)
         lua_pushstring(L, szBasename);
     else
-        lua_pushnil(L);
+        luaL_error(L, "failed to get file base name from path: %s", szPath);
+
     return 1;
 }
 
@@ -159,7 +197,8 @@ lua_realpath(lua_State* L) {
     if(realpath(szPath, szPathBuffer))
         lua_pushstring(L, szPathBuffer);
     else
-        lua_pushnil(L);
+        luaL_error(L, "failed to get real path from path: %s", szPath);
+
     return 1;
 }
 
@@ -181,6 +220,115 @@ lua_getcwd(lua_State* L) {
     if (getcwd(szPathBuffer, PATH_MAX))
         lua_pushstring(L, szPathBuffer);
     else
-        lua_pushnil(L);
+        luaL_error(L, "failed to get working directory path");
+
     return 1;
+}
+
+static int
+lua_opendir(lua_State* L) {
+    assert(L);
+
+    const char*
+        szPath      = luaL_checkstring(L, 1);
+    DIR*
+        lpDirStream = opendir(szPath);
+    if (lpDirStream) {
+        *(DIR**)lua_newuserdata(L, sizeof(DIR*)) =
+            lpDirStream;
+
+        luaL_getmetatable(L, "Directory");
+        lua_setmetatable(L, -2);
+    }
+    else
+        luaL_error(L, "failed to open directory stream from path: %s", szPath);
+
+    return 1;
+}
+
+static int
+lua_closedir(lua_State* L) {
+    assert(L);
+
+    DIR*
+        lpDirStream = *(DIR**)luaL_checkudata(L, 1, "Directory");
+    assert(lpDirStream);
+
+    closedir(lpDirStream);
+    return 0;
+}
+
+static int
+lua_readdir(lua_State* L) {
+    assert(L);
+    
+    luaL_checkudata(L, 1, "Directory");
+    
+    lua_pushnil(L);
+    lua_copy(L, 1, -1);
+
+    lua_pushcclosure(L, lua_readdir_iterator, 1);
+    
+    return 1;
+}
+
+static int
+lua_readdir_iterator(lua_State* L) {
+    assert(L);
+
+    DIR*
+        lpDirStream = *(DIR**)luaL_checkudata(L, lua_upvalueindex(1), "Directory");
+    assert(lpDirStream);
+
+    struct dirent*
+        lpDirEntry  = readdir(lpDirStream);
+    if (lpDirEntry)
+        lua_pushstring(L, lpDirEntry->d_name);
+    else 
+        lua_pushnil(L);
+
+    return 1;
+}
+
+static int
+lua_seekdir(lua_State* L) {
+    assert(L);
+
+    DIR*
+        lpDirStream = *(DIR**)luaL_checkudata(L, 1, "Directory");
+    assert(lpDirStream);
+
+    lua_Integer
+        iOffset     = luaL_checkinteger(L, 2);
+    
+    seekdir(lpDirStream, iOffset);
+
+    return 0;
+}
+
+static int
+lua_telldir(lua_State* L) {
+    assert(L);
+
+    DIR*
+        lpDirStream = *(DIR**)luaL_checkudata(L, 1, "Directory");
+    assert(lpDirStream);
+
+    lua_Integer
+        iOffset     = telldir(lpDirStream);
+
+    lua_pushinteger(L, iOffset);
+    return 1;
+}
+
+static int
+lua_rewinddir(lua_State* L) {
+    assert(L);
+
+    DIR*
+        lpDirStream = *(DIR**)luaL_checkudata(L, 1, "Directory");
+    assert(lpDirStream);
+
+    rewinddir(lpDirStream);
+    return 0;
 }
