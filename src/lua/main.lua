@@ -28,4 +28,13 @@ else
         log.println("> input:\t%s", strInputFile)
         log.println("> output:\t%s", strOutputFile)
     end
+
+    local strDir    = fs.realpath(fs.getcwd())
+    local directory = fs.opendir(strDir)
+
+    log.println("testing fs directory stream")
+    log.println("listing directory: %s", strDir)
+    for strPath in directory:readdir() do
+        print(strPath)
+    end
 end
