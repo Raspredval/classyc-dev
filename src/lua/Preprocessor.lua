@@ -154,7 +154,7 @@ function Preprocessor:Preprocess(strInputFile, strOutputFile)
         ("failed to open output file: %s") :
         format(strOutputFile))
 
-    self.strFile    = optval(fs.basename(strInputFile))
+    self.strFile    = fs.basename(strInputFile)
     self.nLine      = 1
 
     for strLine in fInput:lines() do
