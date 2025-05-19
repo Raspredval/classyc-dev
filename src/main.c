@@ -8,7 +8,6 @@
 #include <stdbool.h>
 
 #include "lua_bytecode.h"
-#include "lua_utility.h"
 #include "lua_fs.h"
 
 typedef struct {
@@ -48,7 +47,6 @@ main(int argc, const char* argv[]) {
     luaL_openlibs(g_hLuaState);
     PassBuildInfo(g_hLuaState);
     PassConsoleArgs(g_hLuaState, argc, argv);
-    PassUtilityFunctions(g_hLuaState);
     PreloadFilesystemAPI(g_hLuaState);
 
     ModuleInfo
