@@ -1,0 +1,2 @@
+*.lua linguist-language=Lua
+/src/*.lua linguist-detectable
