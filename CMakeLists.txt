@@ -10,6 +10,11 @@ add_executable(${PROJECT_NAME}
     "src/main.c"
     "src/lua_utility.c"
     "src/lua_fs.c"
+
+    "include/lua_bytecode.h"
+    "include/lua_utility.h"
+    "include/lua_fs.h"
+    
     "src/lua/main.lua"
     "src/lua/log.lua"
     "src/lua/oop.lua"
@@ -20,6 +25,7 @@ add_executable(${PROJECT_NAME}
 target_include_directories(${PROJECT_NAME}
     PRIVATE
         "include/"
+        "bytecode/"
         SYSTEM "/usr/include/luajit-2.1")
 target_link_directories(${PROJECT_NAME}
     PRIVATE
@@ -38,19 +44,19 @@ endif()
 add_custom_target(CompileLua
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     COMMAND ${LUAJIT_CLI_PATH} ${LUAJIT_ARGS} -n "log"
-        "src/lua/log.lua" "include/bytecode/log.h"
+        "src/lua/log.lua" "bytecode/log.lua.h"
     COMMAND ${LUAJIT_CLI_PATH} ${LUAJIT_ARGS} -n "oop"
-        "src/lua/oop.lua" "include/bytecode/oop.h"
+        "src/lua/oop.lua" "bytecode/oop.lua.h"
     COMMAND ${LUAJIT_CLI_PATH} ${LUAJIT_ARGS} -n "main"
-        "src/lua/main.lua" "include/bytecode/main.h"
+        "src/lua/main.lua" "bytecode/main.lua.h"
     COMMAND ${LUAJIT_CLI_PATH} ${LUAJIT_ARGS} -n "Preprocessor"
-        "src/lua/Preprocessor.lua" "include/bytecode/Preprocessor.h"
+        "src/lua/Preprocessor.lua" "bytecode/Preprocessor.lua.h"
     COMMAND ${LUAJIT_CLI_PATH} ${LUAJIT_ARGS} -n "Preprocessor.IMacro"
-        "src/lua/Preprocessor/IMacro.lua" "include/bytecode/Preprocessor/IMacro.h"
+        "src/lua/Preprocessor/IMacro.lua" "bytecode/Preprocessor/IMacro.lua.h"
     COMMAND ${LUAJIT_CLI_PATH} ${LUAJIT_ARGS} -n "Preprocessor.MacroDefined"
-        "src/lua/Preprocessor/MacroDefined.lua" "include/bytecode/Preprocessor/MacroDefined.h"
+        "src/lua/Preprocessor/MacroDefined.lua" "bytecode/Preprocessor/MacroDefined.lua.h"
     COMMAND ${LUAJIT_CLI_PATH} ${LUAJIT_ARGS} -n "Preprocessor.MacroBuiltin"
-        "src/lua/Preprocessor/MacroBuiltin.lua" "include/bytecode/Preprocessor/MacroBuiltin.h")
+        "src/lua/Preprocessor/MacroBuiltin.lua" "bytecode/Preprocessor/MacroBuiltin.lua.h")
 add_dependencies(${PROJECT_NAME}
     CompileLua)
 

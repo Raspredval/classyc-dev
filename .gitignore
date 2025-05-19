@@ -1,5 +1,5 @@
 /build
+/bytecode
 /.cache
 /compile_commands.json
 /assets/*.pp
-/include/bytecode
