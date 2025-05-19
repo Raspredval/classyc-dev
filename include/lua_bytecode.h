@@ -1,6 +1,8 @@
 #ifndef LUA_BYTECODE_H
 #define LUA_BYTECODE_H
 
+// files below are generated from lua files during build
+
 #include "log.lua.h"
 #include "oop.lua.h"
 #include "main.lua.h"
