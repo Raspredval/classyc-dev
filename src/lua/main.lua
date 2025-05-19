@@ -1,6 +1,7 @@
-local log, lpeg, Preprocessor =
+local log, lpeg, fs, Preprocessor =
     require "log",
     require "lpeg",
+    require "fs",
     require "Preprocessor"
 
 log.println("%s - %s %s %s",
