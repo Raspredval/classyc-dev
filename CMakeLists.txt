@@ -9,7 +9,14 @@ project(${PROJECT_NAME} VERSION 0.1 LANGUAGES C)
 add_executable(${PROJECT_NAME}
     "src/main.c"
     "src/lua_utility.c"
-    "src/lua_fs.c")
+    "src/lua_fs.c"
+    "lua/main.lua"
+    "lua/log.lua"
+    "lua/oop.lua"
+    "lua/Preprocessor.lua"
+    "lua/Preprocessor/IMacro.lua"
+    "lua/Preprocessor/MacroDefined.lua"
+    "lua/Preprocessor/MacroBuiltin.lua")
 target_include_directories(${PROJECT_NAME}
     PRIVATE
         "include/"
