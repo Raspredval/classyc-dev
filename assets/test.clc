@@ -3,7 +3,7 @@
 #define NICE 69.0
 #define DANK 420.0
 
-#require "pi.clc"
+#require <pi.clc>
 
 // test multiple inclusion
 #require "pi.clc"
