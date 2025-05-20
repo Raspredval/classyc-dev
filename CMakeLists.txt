@@ -86,5 +86,5 @@ if (${CMAKE_C_COMPILER_ID} STREQUAL "GNU" OR ${CMAKE_C_COMPILER_ID} STREQUAL "Cl
             "-Werror"
             "-Wno-unused-parameter")
 else()
-    message(FATAL_ERROR "Usupported c compiler (supported: gcc, clang)")
+    message(FATAL_ERROR "Unsupported c compiler (supported: gcc, clang)")
 endif()
