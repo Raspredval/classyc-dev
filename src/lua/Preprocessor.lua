@@ -94,8 +94,12 @@ local pegCmdUndef =
     lpeg.C(pegID) * pegPadding * pegEOF
 
 ---@type Pattern
-local pegCmdReqIns =
-    lpeg.C(pegStringLiteral) * pegPadding * pegEOF
+local pegParseLocalFile =
+    "\"" * lpeg.C((lpeg.P(1) - "\"") ^ 0) * "\"" * pegPadding * pegEOF
+
+---@type Pattern
+local pegParseSystemFile =
+    "<" * lpeg.C((lpeg.P(1) - ">") ^ 0) * ">" * pegPadding * pegEOF
 
 ---@alias Command fun(self: Preprocessor, strCmdBody: string)
 
@@ -109,8 +113,8 @@ local pegCmdReqIns =
 ---@class Preprocessor
 ---@field private tblMacrosGlobal       MacroInfo
 ---@field private tblInputFiles         FileInfo[]
+---@field private tblAlreadyRequired    table<string, boolean>
 ---@field private objOutputFile         FileInfo?
----@field private tblAlreadyRequired    string[]
 ---@field private bDisabledSource       boolean
 --- static fields:
 ---@field private tblCommands           table<string, Command>
@@ -135,10 +139,11 @@ end
 ---@return Preprocessor
 function Preprocessor.New()
     local obj   = setmetatable({
-                    tblMacrosGlobal = {},
-                    tblSourceFiles  = {},
-                    objOutputFile   = nil,
-                    bDisabledSource = false,
+                    tblMacrosGlobal     = {},
+                    tblInputFiles       = {},
+                    tblAlreadyRequired  = {},
+                    objOutputFile       = nil,
+                    bDisabledSource     = false
                 }, Preprocessor)
 
     obj.tblMacrosGlobal["__index"] =
@@ -181,21 +186,21 @@ end
 ---@private
 ---@param strFilename string
 function Preprocessor:PushInputFile(strFilename)
-    log.assert(fs.access(strFilename),
-        "input file doesn't exist: %s", strFilename)
+    local strRealPath   = log.assert(fs.realpath(strFilename),
+                            "failed to get real path from file: %s", strFilename)
 
-    local fInputFile    = log.assert(io.open(strFilename, "r"),
+    local fInputFile    = log.assert(io.open(strRealPath, "r"),
                             "failed to open input file: %s", strFilename)
 
     local nFileCount    = #self.tblInputFiles
     self.tblInputFiles[nFileCount + 1] = {
-        strName = strFilename,
+        strName = strRealPath,
         nLine   = 1,
         fData   = fInputFile
     }
 
     self:OutputFile().fData:write(
-        "#FILE_BEGIN ", strFilename, "\n")
+        "#FILE_BEG ", strRealPath, "\n")
 end
 
 ---@private
@@ -364,23 +369,54 @@ function Preprocessor:CmdUndef(strCmdBody)
 end
 
 ---@private
+---@param strLocalFile string
+---@return string
+function Preprocessor:GetLocalFilePath(strLocalFile)
+    local input_file    = self:CurInputFile()
+    local strDirname    = log.assert(fs.dirname(input_file.strName),
+                            "failed to get directory name of the source file: %s",
+                            input_file.strName)
+    local strFilename   = ("%s/%s"):format(strDirname, strLocalFile)
+    
+    log.assert(fs.access(strFilename),
+        "file doesn't exist: %s", strLocalFile)
+
+    return strFilename
+end
+
+---@private
 ---@param strCmdBody string
 function Preprocessor:CmdRequire(strCmdBody)
-    local strFilename   = log.assert(pegCmdReqIns:match(strCmdBody),
-                            "expected string literal, got %s", strCmdBody)
+    local strLocalFile, strSystemFile =
+        pegParseLocalFile:match(strCmdBody),
+        pegParseSystemFile:match(strCmdBody)
+    
+    local strFilename   = self:GetLocalFilePath(
+                            log.assert(strLocalFile or strSystemFile,
+                                "expected file name, got %s", strCmdBody))
     local strRealPath   = log.assert(fs.realpath(strFilename),
-                            "failed to get real path of the required file")
+                            "failed to get real path from file: %s",
+                            strFilename)
 
     if not self.tblAlreadyRequired[strRealPath] then
+        self.tblAlreadyRequired[strRealPath] = true
         self:RecursiveParsing(strFilename)
     end
 end
 
 function Preprocessor:CmdInsert(strCmdBody)
-    local strFilename   = log.assert(pegCmdReqIns:match(strCmdBody),
-                            "expected string literal, got %s", strCmdBody)
+    local strLocalFile, strSystemFile =
+        pegParseLocalFile:match(strCmdBody),
+        pegParseSystemFile:match(strCmdBody)
+    
+    local strFilename   = self:GetLocalFilePath(
+                            log.assert(strLocalFile or strSystemFile,
+                                "expected file name, got %s", strCmdBody))
+    local strRealPath   = log.assert(fs.realpath(strFilename),
+                            "failed to get real path from file: %s",
+                            strFilename)
 
-    self:RecursiveParsing(strFilename)
+    self:RecursiveParsing(strRealPath)
 end
 
 Preprocessor.tblCommands["define"]  =
