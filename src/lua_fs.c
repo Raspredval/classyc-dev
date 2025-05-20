@@ -13,6 +13,9 @@
 
 #include "lua_fs.h"
 
+#ifdef WIN32
+    #define realpath(N, R) _fullpath((R), (N), PATH_MAX)
+#endif
 
 static int
 lua_getcwd(lua_State* L);
@@ -310,8 +313,8 @@ lua_seekdir(lua_State* L) {
         lpDirStream = *(DIR**)luaL_checkudata(L, 1, "Directory");
     assert(lpDirStream);
 
-    lua_Integer
-        iOffset     = luaL_checkinteger(L, 2);
+    long
+        iOffset     = (long)luaL_checkinteger(L, 2);
     
     seekdir(lpDirStream, iOffset);
 
