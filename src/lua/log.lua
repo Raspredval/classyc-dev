@@ -16,10 +16,17 @@ function log.error(strfmt, ...)
     error(strfmt:format(...), 0)
 end
 
-function log.assert(bCond, strfmt, ...)
-    if not bCond then
+---@generic T
+---@param v T?
+---@param strfmt string
+---@param ... any
+---@return T
+function log.assert(v, strfmt, ...)
+    if not v then
         log.error(strfmt, ...)
     end
+
+    return v
 end
 
 ---@param strSourceFile string
@@ -31,15 +38,19 @@ function log.source_error(strSourceFile, nSourceLine, strfmt, ...)
         format(strSourceFile, nSourceLine, strfmt), ...)
 end
 
+---@generic T
 ---@param strSourceFile string
 ---@param nSourceLine integer
----@param bCond boolean
+---@param v T?
 ---@param strfmt string
 ---@param ... any
-function log.source_assert(strSourceFile, nSourceLine, bCond, strfmt, ...)
-    if not bCond then
+---@return T
+function log.source_assert(strSourceFile, nSourceLine, v, strfmt, ...)
+    if not v then
         log.source_error(strSourceFile, nSourceLine, strfmt, ...)
     end
+
+    return v
 end
 
 ---@param strfmt string
@@ -49,13 +60,17 @@ function log.internal_error(strfmt, ...)
         format(debug.traceback("traceback", 2), strfmt))
 end
 
----@param bCond boolean
+---@generic T
+---@param v T?
 ---@param strfmt string
 ---@param ... any
-function log.internal_assert(bCond, strfmt, ...)
-    if not bCond then
+---@return T
+function log.internal_assert(v, strfmt, ...)
+    if not v then
         log.internal_error(strfmt, ...)
     end
+
+    return v
 end
 
 return log
