@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -53,6 +54,12 @@ static int
 lua_rewinddir(lua_State* L);
 
 static int
+lua_rmdir(lua_State* L);
+
+static int
+lua_rmfile(lua_State* L);
+
+static int
 lua_load_fs(lua_State* L);
 
 
@@ -99,6 +106,8 @@ lua_load_fs(lua_State* L) {
             { "dirname",    lua_dirname  },
             { "access",     lua_access   },
             { "opendir",    lua_opendir  },
+            { "rmdir",      lua_rmdir    },
+            { "rmfile",     lua_rmfile   },
             { NULL,         NULL         }
         };
     luaL_newlib(L, lpLibFuncs);
@@ -331,4 +340,26 @@ lua_rewinddir(lua_State* L) {
 
     rewinddir(lpDirStream);
     return 0;
+}
+
+static int
+lua_rmdir(lua_State* L) {
+    assert(L);
+
+    const char*
+        szPath  = luaL_checkstring(L, 1);
+
+    lua_pushboolean(L, rmdir(szPath) == 0);
+    return 1;
+}
+
+static int
+lua_rmfile(lua_State* L) {
+    assert(L);
+
+    const char*
+        szPath  = luaL_checkstring(L, 1);
+
+    lua_pushboolean(L, remove(szPath) == 0);
+    return 1;
 }

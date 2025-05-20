@@ -30,6 +30,14 @@ function fs.access(path, mode) end
 ---@return Directory
 function fs.opendir(path) end
 
+---@param path string
+---@return boolean
+function fs.rmdir(path) end
+
+---@param path string
+---@return boolean
+function fs.rmfile(path) end
+
 ---@class Directory
 local Directory = {}
 
