@@ -203,12 +203,11 @@ lua_realpath(lua_State* L) {
 
     const char*
         szPath      = luaL_checkstring(L, 1);
-    strncpy(szPathBuffer, szPath, PATH_MAX);
     const char*
         szRealpath  = realpath(szPath, szPathBuffer);
 
     if (szRealpath)
-        lua_pushstring(L, szPathBuffer);
+        lua_pushstring(L, szRealpath);
     else
         lua_pushnil(L);
 
