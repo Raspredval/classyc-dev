@@ -1,8 +1,12 @@
 #define EXIT_SUCCESS 0
 #define EXIT_FAILURE -1
-#define PI 3.14
 #define NICE 69.0
 #define DANK 420.0
+
+#require "pi.clc"
+
+// test multiple inclusion
+#require "pi.clc"
 
 // 'const' in classyc is simillar to 'constexpr' in c++
 // every variable/reference/pointer is immutable by default.
