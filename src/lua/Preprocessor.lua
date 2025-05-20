@@ -93,13 +93,25 @@ local pegCmdDefine =
 local pegCmdUndef =
     lpeg.C(pegID) * pegPadding * pegEOF
 
+---@type Pattern
+local pegCmdReqIns =
+    lpeg.C(pegStringLiteral) * pegPadding * pegEOF
+
 ---@alias Command fun(self: Preprocessor, strCmdBody: string)
 
+---@alias MacroInfo table<string, IMacro>
+
+---@class FileInfo
+---@field public strName    string
+---@field public nLine      integer
+---@field public fData      file*
+
 ---@class Preprocessor
----@field private tblMacrosGlobal       table<string, IMacro>
+---@field private tblMacrosGlobal       MacroInfo
+---@field private tblInputFiles         FileInfo[]
+---@field private objOutputFile         FileInfo?
+---@field private tblAlreadyRequired    string[]
 ---@field private bDisabledSource       boolean
----@field private strFile               string
----@field private nLine                 integer
 --- static fields:
 ---@field private tblCommands           table<string, Command>
 local Preprocessor = oop.setAsClass({
@@ -109,22 +121,24 @@ local Preprocessor = oop.setAsClass({
 ---@private
 ---@return string
 function Preprocessor:MacroLine()
-    return tostring(self.nLine)
+    local cur_file  = self:CurInputFile()
+    return tostring(cur_file.nLine)
 end
 
 ---@private
 ---@return string
 function Preprocessor:MacroFile()
-    return ("\"%s\""):format(self.strFile)
+    local cur_file  = self:CurInputFile()
+    return ("\"%s\""):format(cur_file.strName)
 end
 
 ---@return Preprocessor
 function Preprocessor.New()
     local obj   = setmetatable({
                     tblMacrosGlobal = {},
+                    tblSourceFiles  = {},
+                    objOutputFile   = nil,
                     bDisabledSource = false,
-                    strFile         = nil,
-                    nLine           = nil
                 }, Preprocessor)
 
     obj.tblMacrosGlobal["__index"] =
@@ -140,23 +154,86 @@ end
 ---@param strInputFile string
 ---@param strOutputFile string
 function Preprocessor:Preprocess(strInputFile, strOutputFile)
-    log.assert(fs.access(strInputFile),
-        "file doesn't exist: %s", strInputFile)
+    self:OpenOutputFile(strOutputFile)
+    self:RecursiveParsing(strInputFile)
+    self:CloseOutputFile()
+end
 
-    local fInput, fOutput =
-        io.open(strInputFile, "r"),
-        io.open(strOutputFile, "w")
+---@private
+---@param strFilename string
+function Preprocessor:OpenOutputFile(strFilename)
+    local fOutputFile   = log.assert(io.open(strFilename, "w"),
+                            "failed to open output file: %s", strFilename)
+    self.objOutputFile  = {
+        strName = strFilename,
+        nLine   = 1,
+        fData   = fOutputFile
+    }
+end
 
-    fInput  = log.assert(fInput,
-        "failed to open input file: %s", strInputFile)
-    fOutput = log.assert(fOutput,
-        "failed to open output file: %s", strOutputFile)
+function Preprocessor:CloseOutputFile()
+    assert(self.objOutputFile,
+        "no output file present")
+    self.objOutputFile.fData:close()
+    self.objOutputFile = nil
+end
 
-    self.strFile    = log.assert(fs.basename(strInputFile),
-                        "failed to get base filename from %s", strInputFile)
-    self.nLine      = 1
+---@private
+---@param strFilename string
+function Preprocessor:PushInputFile(strFilename)
+    log.assert(fs.access(strFilename),
+        "input file doesn't exist: %s", strFilename)
 
-    for strLine in fInput:lines() do
+    local fInputFile    = log.assert(io.open(strFilename, "r"),
+                            "failed to open input file: %s", strFilename)
+
+    local nFileCount    = #self.tblInputFiles
+    self.tblInputFiles[nFileCount + 1] = {
+        strName = strFilename,
+        nLine   = 1,
+        fData   = fInputFile
+    }
+
+    self:OutputFile().fData:write(
+        "#FILE_BEGIN ", strFilename, "\n")
+end
+
+---@private
+function Preprocessor:PopInputFile()
+    local nFileCount    = #self.tblInputFiles
+    if nFileCount > 0 then
+        self:OutputFile().fData:write(
+            "#FILE_END ", self.tblInputFiles[nFileCount].strName, "\n")
+        self.tblInputFiles[nFileCount].fData:close()
+        self.tblInputFiles[nFileCount] = nil
+    end
+end
+
+---@private
+---@return FileInfo
+function Preprocessor:CurInputFile()
+    local nFileCount    = #self.tblInputFiles
+    log.assert(nFileCount > 0,
+        "no source file info present")
+
+    return self.tblInputFiles[nFileCount]
+end
+
+---@private
+---@return FileInfo
+function Preprocessor:OutputFile()
+    return self.objOutputFile
+end
+
+---@private
+---@param strInputFile string
+function Preprocessor:RecursiveParsing(strInputFile)
+    self:PushInputFile(strInputFile)
+    
+    local input_file, output_file =
+        self:CurInputFile(), self:OutputFile()
+
+    for strLine in input_file.fData:lines() do
         local strCmdName, nCmdNameEnd =
             pegParseCommandName:match(strLine)
         if strCmdName and nCmdNameEnd then
@@ -169,18 +246,20 @@ function Preprocessor:Preprocess(strInputFile, strOutputFile)
                 pegParseCommandBody:match(strLine, nCmdNameEnd) or ""
             fnCommand(self, strCmdBody)
         else
-            fOutput:write(
+            output_file.fData:write(
                 self:ExpandMacros(
                     self:RemoveComments(strLine),
                     self.tblMacrosGlobal))
+            output_file.fData:write("\n")
         end
 
-        fOutput:write("\n")
-        self.nLine = self.nLine + 1;
+        output_file.nLine =
+            output_file.nLine + 1
+        input_file.nLine =
+            input_file.nLine + 1
     end
 
-    fInput:close()
-    fOutput:close()
+    self:PopInputFile()
 end
 
 ---@private
@@ -265,6 +344,8 @@ function Preprocessor:CmdDefine(strCmdBody)
         "macro already exists: %s", strMacroName)
     self.tblMacrosGlobal[strMacroName] =
         MacroDefined.New(strMacroBody, unpack(tblParamList))
+
+    self:OutputFile().fData:write("\n")
 end
 
 ---@private
@@ -278,11 +359,37 @@ function Preprocessor:CmdUndef(strCmdBody)
     log.assert(not oop.isRelatedTo(self.tblMacrosGlobal[strMacroName], MacroBuiltin),
         "undefining builtin macro", strMacroName)
     self.tblMacrosGlobal[strMacroName] = nil
+
+    self:OutputFile().fData:write("\n")
 end
 
-Preprocessor.tblCommands["define"] =
+---@private
+---@param strCmdBody string
+function Preprocessor:CmdRequire(strCmdBody)
+    local strFilename   = log.assert(pegCmdReqIns:match(strCmdBody),
+                            "expected string literal, got %s", strCmdBody)
+    local strRealPath   = log.assert(fs.realpath(strFilename),
+                            "failed to get real path of the required file")
+
+    if not self.tblAlreadyRequired[strRealPath] then
+        self:RecursiveParsing(strFilename)
+    end
+end
+
+function Preprocessor:CmdInsert(strCmdBody)
+    local strFilename   = log.assert(pegCmdReqIns:match(strCmdBody),
+                            "expected string literal, got %s", strCmdBody)
+
+    self:RecursiveParsing(strFilename)
+end
+
+Preprocessor.tblCommands["define"]  =
     Preprocessor.CmdDefine
-Preprocessor.tblCommands["undef"] =
+Preprocessor.tblCommands["undef"]   =
     Preprocessor.CmdUndef
+Preprocessor.tblCommands["require"] =
+    Preprocessor.CmdRequire
+Preprocessor.tblCommands["insert"]  =
+    Preprocessor.CmdInsert
 
 return Preprocessor
