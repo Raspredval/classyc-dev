@@ -1,7 +1,8 @@
-local oop, lpeg, fs, MacroDefined, MacroBuiltin =
+local oop, lpeg, fs, log, MacroDefined, MacroBuiltin =
     require "oop",
     require "lpeg",
     require "fs",
+    require "log",
     require "Preprocessor.MacroDefined",
     require "Preprocessor.MacroBuiltin"
 
@@ -154,7 +155,8 @@ function Preprocessor:Preprocess(strInputFile, strOutputFile)
         ("failed to open output file: %s") :
         format(strOutputFile))
 
-    self.strFile    = fs.basename(strInputFile)
+    self.strFile    = log.assert(fs.basename(strInputFile),
+                        "failed to get base filename from %s", strInputFile)
     self.nLine      = 1
 
     for strLine in fInput:lines() do
