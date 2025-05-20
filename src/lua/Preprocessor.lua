@@ -140,20 +140,17 @@ end
 ---@param strInputFile string
 ---@param strOutputFile string
 function Preprocessor:Preprocess(strInputFile, strOutputFile)
-    assert(fs.access(strInputFile),
-        ("file doesn't exist: %s") :
-        format(strInputFile))
+    log.assert(fs.access(strInputFile),
+        "file doesn't exist: %s", strInputFile)
 
     local fInput, fOutput =
         io.open(strInputFile, "r"),
         io.open(strOutputFile, "w")
 
-    assert(fInput,
-        ("failed to open input file: %s") :
-        format(strInputFile))
-    assert(fOutput,
-        ("failed to open output file: %s") :
-        format(strOutputFile))
+    fInput  = log.assert(fInput,
+        "failed to open input file: %s", strInputFile)
+    fOutput = log.assert(fOutput,
+        "failed to open output file: %s", strOutputFile)
 
     self.strFile    = log.assert(fs.basename(strInputFile),
                         "failed to get base filename from %s", strInputFile)
@@ -165,7 +162,8 @@ function Preprocessor:Preprocess(strInputFile, strOutputFile)
         if strCmdName and nCmdNameEnd then
             local fnCommand =
                 self.tblCommands[strCmdName];
-            assert(fnCommand, ("invalid command name: %s"):format(strCmdName))
+            log.assert(fnCommand,
+                "invalid command name: %s", strCmdName)
 
             local strCmdBody =
                 pegParseCommandBody:match(strLine, nCmdNameEnd) or ""
@@ -208,18 +206,19 @@ function Preprocessor:ExpandMacros(strChunk, tblMacros)
         local nMacroBegin, strMacroName, tblMacroParams, nMacroEnd =
             pegParseMacro:match(strChunk)
         if strMacroName then
-            assert((-lpeg.P"__"):match(strMacroName),
+            log.assert((-lpeg.P"__"):match(strMacroName),
                 "macro and parameter names beginning with '__' are reserved and cannot be used")
 
             local objMacro =
                 tblMacros[strMacroName]
-            assert(objMacro,
-                ("undefined macro: %s"):format(strMacroName))
+            log.assert(objMacro,
+                "undefined macro: %s", strMacroName)
             
             local nExpectedParams, nRealParams =
                 objMacro:ParamCount(), #tblMacroParams
-            assert(nExpectedParams == nRealParams,
-                ("invalid macro parameter count: expected %i, got %i"):format(nExpectedParams, nRealParams))
+            log.assert(nExpectedParams == nRealParams,
+                "invalid macro parameter count: expected %i, got %i",
+                nExpectedParams, nRealParams)
 
             local tblMacrosLocal =
                 setmetatable({}, tblMacros)
@@ -227,9 +226,10 @@ function Preprocessor:ExpandMacros(strChunk, tblMacros)
                 tblMacrosLocal
 
             for i = 1, nRealParams do
-                local strParamName, strParamBody =
-                    objMacro:ParamName(i), tblMacroParams[i]
-                assert(strParamName and strParamBody)
+                local strParamName = log.assert(objMacro:ParamName(i),
+                    "failed to get param name #%i", i)
+                local strParamBody = log.assert(tblMacroParams[i],
+                    "failed to get param body #%i", i)
 
                 tblMacrosLocal[strParamName] =
                     MacroDefined.New(strParamBody)
@@ -251,18 +251,18 @@ function Preprocessor:CmdDefine(strCmdBody)
     local strMacroName, tblParamList, strMacroBody =
         pegCmdDefine:match(strCmdBody)
     
-    assert(strMacroName and tblParamList and strMacroBody,
+    log.assert(strMacroName and tblParamList and strMacroBody,
         "invalid macro definition")
 
-    assert((-lpeg.P"__"):match(strMacroName),
+    log.assert((-lpeg.P"__"):match(strMacroName),
         "macro and parameter names beginning with '__' are reserved and cannot be used")
     for i, strParamName in ipairs(tblParamList) do
-        assert((-lpeg.P"__"):match(strParamName),
+        log.assert((-lpeg.P"__"):match(strParamName),
             "macro and parameter names beginning with '__' are reserved and cannot be used")
     end
 
-    assert(not self.tblMacrosGlobal[strMacroName],
-        ("macro already exists: %s"):format(strMacroName))
+    log.assert(not self.tblMacrosGlobal[strMacroName],
+        "macro already exists: %s", strMacroName)
     self.tblMacrosGlobal[strMacroName] =
         MacroDefined.New(strMacroBody, unpack(tblParamList))
 end
@@ -272,10 +272,11 @@ end
 function Preprocessor:CmdUndef(strCmdBody)
     local strMacroName =
         pegCmdUndef:match(strCmdBody)
-    assert(strMacroName, "invalid macro name, must be a valid identifier")
+    log.assert(strMacroName,
+        "invalid macro name, must be a valid identifier")
 
-    assert(not oop.isRelatedTo(self.tblMacrosGlobal[strMacroName], MacroBuiltin),
-        ("undefining builtin macro"):format(strMacroName))
+    log.assert(not oop.isRelatedTo(self.tblMacrosGlobal[strMacroName], MacroBuiltin),
+        "undefining builtin macro", strMacroName)
     self.tblMacrosGlobal[strMacroName] = nil
 end
 
