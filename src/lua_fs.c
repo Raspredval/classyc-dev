@@ -6,9 +6,9 @@
 #include <limits.h>
 #include <assert.h>
 
-#include <luajit.h>
-#include <lualib.h>
-#include <lauxlib.h>
+#include <luajit-2.1/luajit.h>
+#include <luajit-2.1/lualib.h>
+#include <luajit-2.1/lauxlib.h>
 
 #include "lua_fs.h"
 
