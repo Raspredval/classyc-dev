@@ -6,7 +6,7 @@ local fs = {}
 function fs.getcwd() end
 
 ---@param path string
----@return boolean?
+---@return boolean
 function fs.chdir(path) end
 
 ---@param path string
