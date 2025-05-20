@@ -33,7 +33,9 @@ function fs.opendir(path) end
 ---@class Directory
 local Directory = {}
 
----@return fun() : string | nil
+---@alias DirectoryIterator fun() : string?
+
+---@return DirectoryIterator
 function Directory:readdir() end
 
 ---@param offset integer
