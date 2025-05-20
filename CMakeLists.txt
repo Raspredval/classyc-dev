@@ -20,24 +20,36 @@ add_executable(${PROJECT_NAME}
     "src/lua/Preprocessor/IMacro.lua"
     "src/lua/Preprocessor/MacroDefined.lua"
     "src/lua/Preprocessor/MacroBuiltin.lua")
-target_include_directories(${PROJECT_NAME}
-    PRIVATE
-        "include/"
-        "bytecode/"
-        SYSTEM "/usr/include/luajit-2.1")
-target_link_directories(${PROJECT_NAME}
-    PRIVATE
-        "/usr/lib")
-target_link_libraries(${PROJECT_NAME}
-    PRIVATE
-        luajit-5.1)
 
-set(LUAJIT_CLI_PATH /usr/bin/luajit)
+if (MSYS)
+    if (not MSYS_DIR)
+        set(MSYS_DIR "C:/msys2")
+    endif()
+
+    set(CMAKE_SYSTEM_LIBRARY_PATH "${MSYS_DIR}/ucrt/lib")
+    set(CMAKE_SYSTEM_INCLUDE_PATH "${MSYS_DIR}/ucrt/include")
+
+    set(LUAJIT_CLI_PATH "${MSYS_DIR}/ucrt/bin/luajit")
+else()
+    set(CMAKE_SYSTEM_LIBRARY_PATH "/usr/lib")
+    set(CMAKE_SYSTEM_INCLUDE_PATH "/usr/include")
+
+    set(LUAJIT_CLI_PATH "/usr/bin/luajit")
+endif()
+
 if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
     set(LUAJIT_ARGS -b -g -t h)
 else()
     set(LUAJIT_ARGS -b -s -t h)
 endif()
+
+target_include_directories(${PROJECT_NAME}
+    PRIVATE
+        "include/"
+        "bytecode/")
+target_link_libraries(${PROJECT_NAME}
+    PRIVATE
+        luajit-5.1)
 
 add_custom_target(CompileLua
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
