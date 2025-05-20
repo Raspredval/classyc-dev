@@ -2,23 +2,23 @@
 
 local fs = {}
 
----@return string
+---@return string?
 function fs.getcwd() end
 
 ---@param path string
----@return boolean
+---@return boolean?
 function fs.chdir(path) end
 
 ---@param path string
----@return string
+---@return string?
 function fs.realpath(path) end
 
 ---@param path string
----@return string
+---@return string?
 function fs.basename(path) end
 
 ---@param path string
----@return string
+---@return string?
 function fs.dirname(path) end
 
 ---@param path string
@@ -27,7 +27,7 @@ function fs.dirname(path) end
 function fs.access(path, mode) end
 
 ---@param path string
----@return Directory
+---@return Directory?
 function fs.opendir(path) end
 
 ---@param path string

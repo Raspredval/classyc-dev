@@ -174,7 +174,8 @@ lua_dirname(lua_State* L) {
     if (szDirname)
         lua_pushstring(L, szDirname);
     else
-        luaL_error(L, "failed to get file directory from path: %s", szPath);
+        lua_pushnil(L);
+
     return 1;
 }
 
@@ -191,7 +192,7 @@ lua_basename(lua_State* L) {
     if (szBasename)
         lua_pushstring(L, szBasename);
     else
-        luaL_error(L, "failed to get file base name from path: %s", szPath);
+        lua_pushnil(L);
 
     return 1;
 }
@@ -206,7 +207,7 @@ lua_realpath(lua_State* L) {
     if(realpath(szPath, szPathBuffer))
         lua_pushstring(L, szPathBuffer);
     else
-        luaL_error(L, "failed to get real path from path: %s", szPath);
+        lua_pushnil(L);
 
     return 1;
 }
@@ -229,7 +230,7 @@ lua_getcwd(lua_State* L) {
     if (getcwd(szPathBuffer, PATH_MAX))
         lua_pushstring(L, szPathBuffer);
     else
-        luaL_error(L, "failed to get working directory path");
+        lua_pushnil(L);
 
     return 1;
 }
@@ -250,7 +251,7 @@ lua_opendir(lua_State* L) {
         lua_setmetatable(L, -2);
     }
     else
-        luaL_error(L, "failed to open directory stream from path: %s", szPath);
+        lua_pushnil(L);
 
     return 1;
 }
