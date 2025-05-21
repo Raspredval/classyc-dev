@@ -21,6 +21,16 @@ add_executable(${PROJECT_NAME}
     "src/lua/Preprocessor/MacroDefined.lua"
     "src/lua/Preprocessor/MacroBuiltin.lua")
 
+
+if (NOT EXISTS "build/")
+    file(MAKE_DIRECTORY "build/")
+endif()
+
+if (NOT EXISTS "bytecode/")
+    file(MAKE_DIRECTORY "bytecode/")
+    file(MAKE_DIRECTORY "bytecode/Preprocessor/")
+endif()
+
 if (${CMAKE_HOST_SYSTEM_NAME} STREQUAL "Windows")
     message("Host system: Windows")
     if (NOT DEFINED ${MSYS_PATH})
