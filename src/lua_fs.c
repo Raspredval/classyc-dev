@@ -13,7 +13,7 @@
 
 #include "lua_fs.h"
 
-#ifdef __MINGW64__
+#if defined(__MINGW64__) || defined (__MINGW32__)
     #define realpath(N, R) _fullpath((R), (N), PATH_MAX)
 #endif
 
