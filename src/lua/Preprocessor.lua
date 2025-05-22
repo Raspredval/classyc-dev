@@ -105,11 +105,6 @@ local pegParseSystemFile =
 
 ---@alias MacroInfo table<string, IMacro>
 
----@class FileInfo
----@field public strName    string
----@field public nLine      integer
----@field public fData      file*
-
 ---@class Preprocessor
 ---@field private tblMacrosGlobal       MacroInfo
 ---@field private tblInputFiles         FileInfo[]
