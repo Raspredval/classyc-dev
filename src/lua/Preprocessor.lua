@@ -25,7 +25,7 @@ local pegParseCommandBody =
 local pegParseLineComment = lpeg.P{
     "first_comment",
     text            = (lpeg.P(1) - "//" - "\"" - "\'") ^ 0,
-    literal         = pegStringLiteral + pegCharLiteral,
+    literal         = PEG.StringLiteral + PEG.CharLiteral,
     comment         = lpeg.Cp() * "//",
     first_comment   = lpeg.V"text" * (lpeg.V"literal" * lpeg.V"text") ^ 0 * lpeg.V"comment"
 }
@@ -35,7 +35,7 @@ local pegParseLineComment = lpeg.P{
 ---@type Pattern
 local pegCmdDefine =
     lpeg.C(PEG.ID) *
-    lpeg.Ct(("(" * PEG.NameList * ")") ^ -1) *
+    lpeg.Ct(("(" * PEG.IDList * ")") ^ -1) *
     PEG.Space * lpeg.C(lpeg.P(1) ^ 1)
 
 ---@type Pattern
