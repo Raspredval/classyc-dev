@@ -21,9 +21,18 @@ end
 PEG.ID =
     (PEG.Alpha + "_") * ((PEG.Alnum + "_") ^ 0)
 
+PEG.IsStringEOF = false
+
+local pegCatchStringEOF =
+    lpeg.Cmt(PEG.EOF, function() PEG.IsStringEOF = true; return false end)
+local pegResetStringEOF =
+    lpeg.Cmt(lpeg.P"\"", function() PEG.IsStringEOF = false; return true end)
+
 ---@type Pattern
 PEG.StringLiteral =
-    "\"" * (("\\" * lpeg.P(1)) + (lpeg.P(1) - "\"")) ^ 0 * "\""
+    "\"" *
+    (("\\" * lpeg.P(1)) + (lpeg.P(1) - "\"")) ^ 0 *
+    (pegCatchStringEOF + pegResetStringEOF)
 
 ---@type Pattern
 PEG.CharLiteral =
