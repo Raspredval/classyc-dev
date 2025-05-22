@@ -21,10 +21,20 @@ add_executable(${PROJECT_NAME}
     "src/lua/Preprocessor/MacroDefined.lua"
     "src/lua/Preprocessor/MacroBuiltin.lua")
 
+
+if (NOT EXISTS "build/")
+    file(MAKE_DIRECTORY "build/")
+endif()
+
+if (NOT EXISTS "bytecode/")
+    file(MAKE_DIRECTORY "bytecode/")
+    file(MAKE_DIRECTORY "bytecode/Preprocessor/")
+endif()
+
 if (${CMAKE_HOST_SYSTEM_NAME} STREQUAL "Windows")
     message("Host system: Windows")
     if (NOT DEFINED ${MSYS_PATH})
-        set(MSYS_PATH "C:\\msys64")
+        set(MSYS_PATH "C:/msys64")
     endif()
 
     if (NOT EXISTS ${MSYS_PATH})
@@ -33,10 +43,10 @@ if (${CMAKE_HOST_SYSTEM_NAME} STREQUAL "Windows")
         message("MSYS2 path: ${MSYS_PATH}")
     endif()
 
-    set(CMAKE_SYSTEM_LIBRARY_PATH "${MSYS_PATH}\\ucrt64\\lib")
-    set(CMAKE_SYSTEM_INCLUDE_PATH "${MSYS_PATH}\\ucrt64\\include")
+    set(CMAKE_SYSTEM_LIBRARY_PATH "${MSYS_PATH}/ucrt64/lib")
+    set(CMAKE_SYSTEM_INCLUDE_PATH "${MSYS_PATH}/ucrt64/include")
 
-    set(LUAJIT_CLI_PATH "${MSYS_PATH}\\ucrt64\\bin\\luajit.exe")
+    set(LUAJIT_CLI_PATH "${MSYS_PATH}/ucrt64/bin/luajit.exe")
 else()
     message("Host system: Unix-like")
     set(CMAKE_SYSTEM_LIBRARY_PATH "/usr/lib")
