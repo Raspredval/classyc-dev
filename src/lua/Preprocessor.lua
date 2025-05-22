@@ -1,8 +1,9 @@
-local oop, lpeg, fs, log, MacroDefined, MacroBuiltin =
+local oop, lpeg, fs, log, FileInfo, MacroDefined, MacroBuiltin =
     require "oop",
     require "lpeg",
     require "fs",
     require "log",
+    require "FileInfo",
     require "Preprocessor.MacroDefined",
     require "Preprocessor.MacroBuiltin"
 
@@ -121,14 +122,14 @@ local Preprocessor = oop.setAsClass({
 ---@return string
 function Preprocessor:MacroLine()
     local cur_file  = self:CurInputFile()
-    return tostring(cur_file.nLine)
+    return tostring(cur_file:Line())
 end
 
 ---@private
 ---@return string
 function Preprocessor:MacroFile()
     local cur_file  = self:CurInputFile()
-    return ("\"%s\""):format(cur_file.strName)
+    return ("\"%s\""):format(cur_file:Name())
 end
 
 ---@return Preprocessor
@@ -162,19 +163,10 @@ end
 ---@private
 ---@param strFilename string
 function Preprocessor:OpenOutputFile(strFilename)
-    local fOutputFile   = log.assert(io.open(strFilename, "w"),
-                            "failed to open output file: %s", strFilename)
-    self.objOutputFile  = {
-        strName = strFilename,
-        nLine   = 1,
-        fData   = fOutputFile
-    }
+    self.objOutputFile  = FileInfo.New(strFilename, "w")
 end
 
 function Preprocessor:CloseOutputFile()
-    assert(self.objOutputFile,
-        "no output file present")
-    self.objOutputFile.fData:close()
     self.objOutputFile = nil
 end
 
@@ -184,17 +176,11 @@ function Preprocessor:PushInputFile(strFilename)
     local strRealPath   = log.assert(fs.realpath(strFilename),
                             "failed to get real path from file: %s", strFilename)
 
-    local fInputFile    = log.assert(io.open(strRealPath, "r"),
-                            "failed to open input file: %s", strFilename)
-
     local nFileCount    = #self.tblInputFiles
-    self.tblInputFiles[nFileCount + 1] = {
-        strName = strRealPath,
-        nLine   = 1,
-        fData   = fInputFile
-    }
+    self.tblInputFiles[nFileCount + 1] =
+        FileInfo.New(strRealPath, "r")
 
-    self:OutputFile().fData:write(
+    self:OutputFile():File():write(
         "#FILE_BEG ", strRealPath, "\n")
 end
 
@@ -202,9 +188,8 @@ end
 function Preprocessor:PopInputFile()
     local nFileCount    = #self.tblInputFiles
     if nFileCount > 0 then
-        self:OutputFile().fData:write(
-            "#FILE_END ", self.tblInputFiles[nFileCount].strName, "\n")
-        self.tblInputFiles[nFileCount].fData:close()
+        self:OutputFile():File():write(
+            "#FILE_END ", self.tblInputFiles[nFileCount]:Name(), "\n")
         self.tblInputFiles[nFileCount] = nil
     end
 end
@@ -233,7 +218,7 @@ function Preprocessor:RecursiveParsing(strInputFile)
     local input_file, output_file =
         self:CurInputFile(), self:OutputFile()
 
-    for strLine in input_file.fData:lines() do
+    for strLine in input_file:File():lines() do
         local strCmdName, nCmdNameEnd =
             pegParseCommandName:match(strLine)
         if strCmdName and nCmdNameEnd then
@@ -246,17 +231,15 @@ function Preprocessor:RecursiveParsing(strInputFile)
                 pegParseCommandBody:match(strLine, nCmdNameEnd) or ""
             fnCommand(self, strCmdBody)
         else
-            output_file.fData:write(
+            output_file:File():write(
                 self:ExpandMacros(
                     self:RemoveComments(strLine),
                     self.tblMacrosGlobal))
-            output_file.fData:write("\n")
+            output_file:File():write("\n")
         end
 
-        output_file.nLine =
-            output_file.nLine + 1
-        input_file.nLine =
-            input_file.nLine + 1
+        output_file:IncrLine()
+        input_file:IncrLine()
     end
 
     self:PopInputFile()
@@ -345,7 +328,7 @@ function Preprocessor:CmdDefine(strCmdBody)
     self.tblMacrosGlobal[strMacroName] =
         MacroDefined.New(strMacroBody, unpack(tblParamList))
 
-    self:OutputFile().fData:write("\n")
+    self:OutputFile():File():write("\n")
 end
 
 ---@private
@@ -360,7 +343,7 @@ function Preprocessor:CmdUndef(strCmdBody)
         "undefining builtin macro", strMacroName)
     self.tblMacrosGlobal[strMacroName] = nil
 
-    self:OutputFile().fData:write("\n")
+    self:OutputFile():File():write("\n")
 end
 
 ---@private
@@ -368,9 +351,9 @@ end
 ---@return string
 function Preprocessor:GetLocalFilePath(strLocalFile)
     local input_file    = self:CurInputFile()
-    local strDirname    = log.assert(fs.dirname(input_file.strName),
+    local strDirname    = log.assert(fs.dirname(input_file:Name()),
                             "failed to get directory name of the source file: %s",
-                            input_file.strName)
+                            input_file:Name())
     local strFilename   = ("%s/%s"):format(strDirname, strLocalFile)
     
     log.assert(fs.access(strFilename),
