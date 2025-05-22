@@ -1,78 +1,24 @@
-local oop, lpeg, fs, log, FileInfo, MacroDefined, MacroBuiltin =
+local oop, lpeg, PEG, fs, log, FileInfo, MacroDefined, MacroBuiltin =
     require "oop",
     require "lpeg",
+    require "CommonPatterns",
     require "fs",
     require "log",
     require "FileInfo",
     require "Preprocessor.MacroDefined",
     require "Preprocessor.MacroBuiltin"
 
-local pegLoCase, pegHiCase =
-    lpeg.R"az", lpeg.R"AZ"
-local pegAlpha, pegDigit =
-    pegLoCase + pegHiCase, lpeg.R"09"
-local pegAlnum, pegSpace =
-    pegAlpha + pegDigit, lpeg.S" \t"
-local pegEOF, pegPadding =
-    -lpeg.P(1), pegSpace ^ 0
-
----@param peg Pattern
----@return Pattern
-local function pegfBounds(peg)
-    return lpeg.Cp() * peg * lpeg.Cp()
-end
-
----@type Pattern
-local pegID =
-    (pegAlpha + "_") * ((pegAlnum + "_") ^ 0)
-
 ---@type Pattern
 local pegParseCommandName =
-    pegPadding *
-    ("#" * lpeg.C(pegID)) * lpeg.Cp()
+    PEG.Padding *
+    ("#" * lpeg.C(PEG.ID)) * lpeg.Cp()
 
 ---@type Pattern
 local pegParseCommandBody =
-    pegPadding *
+    PEG.Padding *
     lpeg.C(lpeg.P(1) ^ 1)
 
----@type Pattern
-local pegStringLiteral =
-    "\"" * (("\\" * lpeg.P(1)) + (lpeg.P(1) - "\"")) ^ 0 * "\""
-
----@type Pattern
-local pegCharLiteral =
-    "\'" * (("\\" * lpeg.P(1)) + (lpeg.P(1) - "\'")) * "\'"
-
 ---@diagnostic disable missing-fields
----@type Pattern
-local pegExprList = lpeg.P{
-    "root_list",
-    root_list   = lpeg.C(lpeg.V"expr") * ("," * lpeg.C(lpeg.V"expr")) ^ 0,
-    expr_list   = lpeg.V"expr" * ("," * lpeg.V"expr") ^ 0,
-    expr        = lpeg.V"expr_char" ^ 0 * ((lpeg.V"round_brkt" + lpeg.V"square_brkt" + lpeg.V"curly_brkt" + pegStringLiteral + pegCharLiteral) * lpeg.V"expr") ^ -1,
-    expr_char   = pegAlnum + pegSpace + lpeg.S"+-*/^%!~&|.:$@_",
-    round_brkt  = "(" * lpeg.V"expr_list" * ")",
-    square_brkt = "[" * lpeg.V"expr_list" * "]",
-    curly_brkt  = "{" * lpeg.V"expr_list" * "}"
-}
-
----@type Pattern
-local pegNameList = lpeg.P{
-    "name_list",
-    name        = lpeg.C(pegID) * pegPadding,
-    separator   = "," * pegPadding,
-    name_list   = pegPadding * lpeg.V"name" * (lpeg.V"separator" * lpeg.V"name") ^ 0 * pegPadding
-}
-
----@type Pattern
-local pegParseMacro = lpeg.P{
-    "first_macro",
-    text        = (lpeg.P(1) - "$" - "\"" - "\'") ^ 0,
-    literal     = pegStringLiteral + pegCharLiteral,
-    macro       = "$" * lpeg.C(pegID) * lpeg.Ct(("(" * pegExprList * ")") ^ -1),
-    first_macro = lpeg.V"text" * (lpeg.V"literal" * lpeg.V"text") ^ 0 * pegfBounds(lpeg.V"macro")
-}
 
 ---@type Pattern
 local pegParseLineComment = lpeg.P{
@@ -82,25 +28,26 @@ local pegParseLineComment = lpeg.P{
     comment         = lpeg.Cp() * "//",
     first_comment   = lpeg.V"text" * (lpeg.V"literal" * lpeg.V"text") ^ 0 * lpeg.V"comment"
 }
+
 ---@diagnostic enable missing-fields
 
 ---@type Pattern
 local pegCmdDefine =
-    lpeg.C(pegID) *
-    lpeg.Ct(("(" * pegNameList * ")") ^ -1) *
-    pegSpace * lpeg.C(lpeg.P(1) ^ 1)
+    lpeg.C(PEG.ID) *
+    lpeg.Ct(("(" * PEG.NameList * ")") ^ -1) *
+    PEG.Space * lpeg.C(lpeg.P(1) ^ 1)
 
 ---@type Pattern
 local pegCmdUndef =
-    lpeg.C(pegID) * pegPadding * pegEOF
+    lpeg.C(PEG.ID) * PEG.Padding * PEG.EOF
 
 ---@type Pattern
 local pegParseLocalFile =
-    "\"" * lpeg.C((lpeg.P(1) - "\"") ^ 0) * "\"" * pegPadding * pegEOF
+    "\"" * lpeg.C((lpeg.P(1) - "\"") ^ 0) * "\"" * PEG.Padding * PEG.EOF
 
 ---@type Pattern
 local pegParseSystemFile =
-    "<" * lpeg.C((lpeg.P(1) - ">") ^ 0) * ">" * pegPadding * pegEOF
+    "<" * lpeg.C((lpeg.P(1) - ">") ^ 0) * ">" * PEG.Padding * PEG.EOF
 
 ---@alias Command fun(self: Preprocessor, strCmdBody: string)
 
