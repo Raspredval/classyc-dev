@@ -1,4 +1,4 @@
-local oop, lpeg, PEG, fs, log, FileInfo, MacroDefined, MacroBuiltin =
+local oop, lpeg, PEG, fs, log, FileInfo, MacroDefined, MacroBuiltin, MacroExpansion =
     require "oop",
     require "lpeg",
     require "CommonPatterns",
@@ -6,7 +6,8 @@ local oop, lpeg, PEG, fs, log, FileInfo, MacroDefined, MacroBuiltin =
     require "log",
     require "FileInfo",
     require "Preprocessor.MacroDefined",
-    require "Preprocessor.MacroBuiltin"
+    require "Preprocessor.MacroBuiltin",
+    require "Preprocessor.MacroExpansion"
 
 ---@type Pattern
 local pegParseCommandName =
@@ -51,10 +52,8 @@ local pegParseSystemFile =
 
 ---@alias Command fun(self: Preprocessor, strCmdBody: string)
 
----@alias MacroInfo table<string, IMacro>
-
 ---@class Preprocessor
----@field private tblMacrosGlobal       MacroInfo
+---@field private tblMacrosGlobal       MacroLookupTable
 ---@field private tblInputFiles         FileInfo[]
 ---@field private tblAlreadyRequired    table<string, boolean>
 ---@field private objOutputFile         FileInfo?
@@ -162,10 +161,10 @@ end
 function Preprocessor:RecursiveParsing(strInputFile)
     self:PushInputFile(strInputFile)
     
-    local input_file, output_file =
+    local input, output =
         self:CurInputFile(), self:OutputFile()
 
-    for strLine in input_file:File():lines() do
+    for strLine in input:File():lines() do
         local strCmdName, nCmdNameEnd =
             pegParseCommandName:match(strLine)
         if strCmdName and nCmdNameEnd then
@@ -178,15 +177,17 @@ function Preprocessor:RecursiveParsing(strInputFile)
                 pegParseCommandBody:match(strLine, nCmdNameEnd) or ""
             fnCommand(self, strCmdBody)
         else
-            output_file:File():write(
-                self:ExpandMacros(
-                    self:RemoveComments(strLine),
-                    self.tblMacrosGlobal))
-            output_file:File():write("\n")
+            local macro_expansion =
+                MacroExpansion.New(self:CurInputFile(), self.tblMacrosGlobal)
+
+            output:File():write(
+                macro_expansion:ExpandMacros(
+                    self:RemoveComments(strLine)),
+                "\n")
         end
 
-        output_file:IncrLine()
-        input_file:IncrLine()
+        output:IncrLine()
+        input:IncrLine()
     end
 
     self:PopInputFile()
@@ -203,54 +204,6 @@ function Preprocessor:RemoveComments(strLine)
         return strLine:sub(1, nCommentBegin - 1)
     else
         return strLine
-    end
-end
-
----@private
----@param strChunk string
----@param tblMacros table<string, IMacro>
----@return string
-function Preprocessor:ExpandMacros(strChunk, tblMacros)
-    while true do
-        local nMacroBegin, strMacroName, tblMacroParams, nMacroEnd =
-            pegParseMacro:match(strChunk)
-        if strMacroName then
-            log.assert((-lpeg.P"__"):match(strMacroName),
-                "macro and parameter names beginning with '__' are reserved and cannot be used")
-
-            local objMacro =
-                tblMacros[strMacroName]
-            log.assert(objMacro,
-                "undefined macro: %s", strMacroName)
-            
-            local nExpectedParams, nRealParams =
-                objMacro:ParamCount(), #tblMacroParams
-            log.assert(nExpectedParams == nRealParams,
-                "invalid macro parameter count: expected %i, got %i",
-                nExpectedParams, nRealParams)
-
-            local tblMacrosLocal =
-                setmetatable({}, tblMacros)
-            tblMacrosLocal["__index"] =
-                tblMacrosLocal
-
-            for i = 1, nRealParams do
-                local strParamName = log.assert(objMacro:ParamName(i),
-                    "failed to get param name #%i", i)
-                local strParamBody = log.assert(tblMacroParams[i],
-                    "failed to get param body #%i", i)
-
-                tblMacrosLocal[strParamName] =
-                    MacroDefined.New(strParamBody)
-            end
-
-            strChunk = ("%s%s%s"):format(
-                strChunk:sub(1, nMacroBegin - 1),
-                self:ExpandMacros(objMacro:Body(), tblMacrosLocal),
-                strChunk:sub(nMacroEnd))
-        else
-            return strChunk
-        end
     end
 end
 
