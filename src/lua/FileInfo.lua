@@ -3,22 +3,40 @@ local oop, log =
     require "log"
 
 ---@class FileInfo
----@field public strName    string
----@field public fData      file*
----@field public nLine      integer
+---@field private strName   string
+---@field private fFile     file*
+---@field private nLine     integer
 local FileInfo = oop.newClass()
 
 ---@param strFilename string
----@param fData file*
+---@param file_mode "r" | "w"
 ---@return FileInfo
-function FileInfo.New(strFilename, fData)
+function FileInfo.New(strFilename, file_mode)
     local obj   = setmetatable({
                     strName = strFilename,
-                    fData   = fData,
+                    fFile   = log.assert(io.open(strFilename, file_mode),
+                                "failed to open file: %s", strFilename),
                     nLine   = 1
                 }, FileInfo)
 
     return obj
+end
+
+function FileInfo:__gc()
+    self.fFile:close()
+end
+
+---@return string
+function FileInfo:Name()
+    return self.strName
+end
+
+function FileInfo:Line()
+    return self.nLine
+end
+
+function FileInfo:File()
+    return self.fFile
 end
 
 function FileInfo:Error(strfmt, ...)
