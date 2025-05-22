@@ -211,6 +211,9 @@ function Preprocessor:RemoveComments(strLine)
     local nCommentBegin =
         pegParseLineComment:match(strLine)
 
+    log.assert(not PEG.IsStringEOF,
+        "missing closing quotes '\"'")
+
     if nCommentBegin then
         return strLine:sub(1, nCommentBegin - 1)
     else

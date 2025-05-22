@@ -45,6 +45,9 @@ function MacroExpansion:ExpandMacros(strChunk)
         local nMacroBegin, strMacroName, tblMacroParams, nMacroEnd =
             pegParseMacro:match(strChunk)
         
+        log.assert(not PEG.IsStringEOF,
+            "missing closing quotes '\"'")
+
         if not strMacroName then
             return strChunk
         else
