@@ -65,17 +65,28 @@ local Preprocessor = oop.setAsClass({
     })
 
 ---@private
+---@param objFileInfo FileInfo
+---@param tblMacros MacroLookupTable
+---@param ... string
 ---@return string
-function Preprocessor:MacroLine()
-    local cur_file  = self:CurInputFile()
-    return tostring(cur_file:Line())
+function Preprocessor:MacroLine(objFileInfo, tblMacros, ...)
+    local tblMacroParams    = {...}
+    local nParamNameCount   = #tblMacroParams
+    log.assert(nParamNameCount == 0,
+        "expected 0 params, got %i", nParamNameCount)
+
+    return tostring(objFileInfo:Line())
 end
 
 ---@private
 ---@return string
-function Preprocessor:MacroFile()
-    local cur_file  = self:CurInputFile()
-    return ("\"%s\""):format(cur_file:Name())
+function Preprocessor:MacroFile(objFileInfo, tblMacros, ...)
+    local tblMacroParams    = {...}
+    local nParamNameCount   = #tblMacroParams
+    log.assert(nParamNameCount == 0,
+        "expected 0 params, got %i", nParamNameCount)
+
+    return ("\"%s\""):format(objFileInfo:Name())
 end
 
 ---@return Preprocessor
