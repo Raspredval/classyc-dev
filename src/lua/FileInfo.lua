@@ -35,6 +35,10 @@ function FileInfo:Line()
     return self.nLine
 end
 
+function FileInfo:IncrLine()
+    self.nLine = self.nLine + 1
+end
+
 function FileInfo:File()
     return self.fFile
 end
