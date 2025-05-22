@@ -51,13 +51,16 @@ main(int argc, const char* argv[]) {
 
     ModuleInfo
         lpModules[] = {
-            { "oop",                        luaJIT_BC_oop,                          luaJIT_BC_oop_SIZE                          },
+            { "CommonPatterns",             luaJIT_BC_CommonPatterns,               luaJIT_BC_CommonPatterns_SIZE               },
+            { "FileInfo",                   luaJIT_BC_FileInfo,                     luaJIT_BC_FileInfo_SIZE                     },
             { "log",                        luaJIT_BC_log,                          luaJIT_BC_log_SIZE                          },
             { "main",                       luaJIT_BC_main,                         luaJIT_BC_main_SIZE                         },
+            { "oop",                        luaJIT_BC_oop,                          luaJIT_BC_oop_SIZE                          },
             { "Preprocessor",               luaJIT_BC_Preprocessor,                 luaJIT_BC_Preprocessor_SIZE                 },
             { "Preprocessor.IMacro",        luaJIT_BC_Preprocessor_IMacro,          luaJIT_BC_Preprocessor_IMacro_SIZE          },
-            { "Preprocessor.MacroDefined",  luaJIT_BC_Preprocessor_MacroDefined,    luaJIT_BC_Preprocessor_MacroDefined_SIZE    },
             { "Preprocessor.MacroBuiltin",  luaJIT_BC_Preprocessor_MacroBuiltin,    luaJIT_BC_Preprocessor_MacroBuiltin_SIZE    },
+            { "Preprocessor.MacroDefined",  luaJIT_BC_Preprocessor_MacroDefined,    luaJIT_BC_Preprocessor_MacroDefined_SIZE    },
+            { "Preprocessor.MacroExpansion",luaJIT_BC_Preprocessor_MacroExpansion,  luaJIT_BC_Preprocessor_MacroExpansion_SIZE  },
             { NULL,                         NULL,                                   0                                           }
         };
     

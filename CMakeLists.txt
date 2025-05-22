@@ -13,13 +13,16 @@ add_executable(${PROJECT_NAME}
     "include/lua_bytecode.h"
     "include/lua_fs.h"
     
-    "src/lua/main.lua"
+    "src/lua/CommonPatterns.lua"
+    "src/lua/FileInfo.lua"
     "src/lua/log.lua"
+    "src/lua/main.lua"
     "src/lua/oop.lua"
     "src/lua/Preprocessor.lua"
     "src/lua/Preprocessor/IMacro.lua"
+    "src/lua/Preprocessor/MacroBuiltin.lua"
     "src/lua/Preprocessor/MacroDefined.lua"
-    "src/lua/Preprocessor/MacroBuiltin.lua")
+    "src/lua/Preprocessor/MacroExpansion.lua")
 
 
 if (NOT EXISTS "build/")
@@ -71,20 +74,26 @@ target_link_libraries(${PROJECT_NAME}
 
 add_custom_target(CompileLua
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    COMMAND ${LUAJIT_CLI_PATH} ${LUAJIT_ARGS} -n "CommonPatterns"
+        "src/lua/CommonPatterns.lua" "bytecode/CommonPatterns.lua.h"
+    COMMAND ${LUAJIT_CLI_PATH} ${LUAJIT_ARGS} -n "FileInfo"
+        "src/lua/FileInfo.lua" "bytecode/FileInfo.lua.h"
     COMMAND ${LUAJIT_CLI_PATH} ${LUAJIT_ARGS} -n "log"
         "src/lua/log.lua" "bytecode/log.lua.h"
-    COMMAND ${LUAJIT_CLI_PATH} ${LUAJIT_ARGS} -n "oop"
-        "src/lua/oop.lua" "bytecode/oop.lua.h"
     COMMAND ${LUAJIT_CLI_PATH} ${LUAJIT_ARGS} -n "main"
         "src/lua/main.lua" "bytecode/main.lua.h"
+    COMMAND ${LUAJIT_CLI_PATH} ${LUAJIT_ARGS} -n "oop"
+        "src/lua/oop.lua" "bytecode/oop.lua.h"
     COMMAND ${LUAJIT_CLI_PATH} ${LUAJIT_ARGS} -n "Preprocessor"
         "src/lua/Preprocessor.lua" "bytecode/Preprocessor.lua.h"
     COMMAND ${LUAJIT_CLI_PATH} ${LUAJIT_ARGS} -n "Preprocessor.IMacro"
         "src/lua/Preprocessor/IMacro.lua" "bytecode/Preprocessor/IMacro.lua.h"
+    COMMAND ${LUAJIT_CLI_PATH} ${LUAJIT_ARGS} -n "Preprocessor.MacroBuiltin"
+        "src/lua/Preprocessor/MacroBuiltin.lua" "bytecode/Preprocessor/MacroBuiltin.lua.h"
     COMMAND ${LUAJIT_CLI_PATH} ${LUAJIT_ARGS} -n "Preprocessor.MacroDefined"
         "src/lua/Preprocessor/MacroDefined.lua" "bytecode/Preprocessor/MacroDefined.lua.h"
-    COMMAND ${LUAJIT_CLI_PATH} ${LUAJIT_ARGS} -n "Preprocessor.MacroBuiltin"
-        "src/lua/Preprocessor/MacroBuiltin.lua" "bytecode/Preprocessor/MacroBuiltin.lua.h")
+    COMMAND ${LUAJIT_CLI_PATH} ${LUAJIT_ARGS} -n "Preprocessor.MacroExpansion"
+        "src/lua/Preprocessor/MacroExpansion.lua" "bytecode/Preprocessor/MacroExpansion.lua.h")
 add_dependencies(${PROJECT_NAME}
     CompileLua)
 
