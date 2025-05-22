@@ -1,9 +1,12 @@
-local oop, IMacro =
+local oop, log, IMacro, MacroExpansion =
     require "oop",
-    require "Preprocessor.IMacro"
+    require "log",
+    require "Preprocessor.IMacro",
+    require "Preprocessor.MacroExpansion"
 
 ---@class MacroDefined : IMacro
 ---@field private strBody string
+---@field private tblParamNames string[]
 local MacroDefined = oop.newClass(IMacro)
 
 ---@param strMacroBody string
@@ -11,27 +14,45 @@ local MacroDefined = oop.newClass(IMacro)
 ---@return MacroDefined
 function MacroDefined.New(strMacroBody, ...)
     local obj   = setmetatable({
-                    strBody = strMacroBody,
-                    ...
+                    strBody         = strMacroBody,
+                    tblParamNames   = {...}
                 }, MacroDefined)
 
     return obj
 end
 
+---@param objFileInfo   FileInfo
+---@param tblMacros     MacroLookupTable
+---@param ... string
 ---@return string
-function MacroDefined:Body()
-    return self.strBody
-end
+function MacroDefined:Expand(objFileInfo, tblMacros, ...)
+    local tblParamNames, tblParamValues =
+        self.tblParamNames, {...}
+    local nParamNameCount, nParamValCount =
+        #tblParamNames, #tblParamValues
+    
+    log.assert(nParamNameCount == nParamValCount,
+        "macro param mismatch -- expected %i, got %i",
+        nParamNameCount, nParamValCount)
+    
+    ---@type MacroLookupTable
+    local tblMacrosLocal = setmetatable({}, tblMacros)
+    tblMacrosLocal["__index"] =
+        tblMacrosLocal
 
----@param i integer
----@return string?
-function MacroDefined:ParamName(i)
-    return self[i]
-end
+    for i = 1, nParamNameCount do
+        local strParamName = tblParamNames[i]
+        log.assert(not tblMacros[strParamName],
+            "macro parameter shadows existing macro: %s", strParamName)
 
----@return integer
-function MacroDefined:ParamCount()
-    return #self
+        tblMacrosLocal[strParamName] =
+            MacroDefined.New(tblParamValues[i])
+    end
+
+    local macro_expansion =
+        MacroExpansion.New(objFileInfo, tblMacrosLocal)
+
+    return macro_expansion:ExpandMacros(self.strBody)
 end
 
 return MacroDefined
