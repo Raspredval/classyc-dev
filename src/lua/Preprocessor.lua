@@ -216,13 +216,6 @@ function Preprocessor:CmdDefine(strCmdBody)
     log.assert(strMacroName and tblParamList and strMacroBody,
         "invalid macro definition")
 
-    log.assert((-lpeg.P"__"):match(strMacroName),
-        "macro and parameter names beginning with '__' are reserved and cannot be used")
-    for i, strParamName in ipairs(tblParamList) do
-        log.assert((-lpeg.P"__"):match(strParamName),
-            "macro and parameter names beginning with '__' are reserved and cannot be used")
-    end
-
     log.assert(not self.tblMacrosGlobal[strMacroName],
         "macro already exists: %s", strMacroName)
     self.tblMacrosGlobal[strMacroName] =
