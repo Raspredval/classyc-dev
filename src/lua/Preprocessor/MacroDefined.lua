@@ -21,19 +21,20 @@ function MacroDefined.New(strMacroBody, ...)
     return obj
 end
 
+---@param strMacroName  string
 ---@param objFileInfo   FileInfo
 ---@param tblMacros     MacroLookupTable
 ---@param ... string
 ---@return string
-function MacroDefined:Expand(objFileInfo, tblMacros, ...)
+function MacroDefined:Expand(strMacroName, objFileInfo, tblMacros, ...)
     local tblParamNames, tblParamValues =
         self.tblParamNames, {...}
     local nParamNameCount, nParamValCount =
         #tblParamNames, #tblParamValues
     
-    log.assert(nParamNameCount == nParamValCount,
-        "macro param mismatch -- expected %i, got %i",
-        nParamNameCount, nParamValCount)
+    objFileInfo:Assert(nParamNameCount == nParamValCount,
+        "%s macro param mismatch -- expected %i, got %i",
+        strMacroName, nParamNameCount, nParamValCount)
     
     ---@type MacroLookupTable
     local tblMacrosLocal = setmetatable({}, tblMacros)
