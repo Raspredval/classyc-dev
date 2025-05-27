@@ -43,10 +43,10 @@ PEG.CharLiteral =
 ---@type Pattern
 PEG.ExprList = lpeg.P{
     "root_list",
-    root_list   = lpeg.C(lpeg.V"expr") * ("," * lpeg.C(lpeg.V"expr")) ^ 0,
+    root_list   = PEG.Padding * lpeg.C(lpeg.V"expr") * ("," * PEG.Padding * lpeg.C(lpeg.V"expr")) ^ 0,
     expr_list   = lpeg.V"expr" * ("," * lpeg.V"expr") ^ 0,
     expr        = lpeg.V"expr_char" ^ 0 * ((lpeg.V"round_brkt" + lpeg.V"square_brkt" + lpeg.V"curly_brkt" + PEG.StringLiteral + PEG.CharLiteral) * lpeg.V"expr") ^ -1,
-    expr_char   = PEG.Alnum + PEG.Space + lpeg.S"+-*/^%!~&|.:$@_",
+    expr_char   = PEG.Alnum + PEG.Space + lpeg.S"+-*/^%!~&|.:$@_<=>",
     round_brkt  = "(" * lpeg.V"expr_list" * ")",
     square_brkt = "[" * lpeg.V"expr_list" * "]",
     curly_brkt  = "{" * lpeg.V"expr_list" * "}"
