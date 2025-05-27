@@ -61,7 +61,7 @@ namespace c { // valid only for x86_64 gcc/clang
 // @(cond)  template constraint, accepts a single constant boolean expression
 func[@T, @(std.is_floating_point_v[T])]
 CircleArea(T fRadius) -> T {
-    return (T)$PI * fRadius * fRadius;
+    return (T)$PI() * fRadius * fRadius;
 }
 
 // same as 'export("main") func main() '
