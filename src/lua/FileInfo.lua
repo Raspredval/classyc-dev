@@ -44,7 +44,7 @@ function FileInfo:File()
 end
 
 function FileInfo:Error(strfmt, ...)
-    error(("[%s:%i] Error: "):format(self.strName, self.nLine) ..
+    error(("[%s: %i] Error: "):format(self.strName, self.nLine) ..
         strfmt:format(...), 0)
 end
 
@@ -55,7 +55,7 @@ end
 ---@return T
 function FileInfo:Assert(v, strfmt, ...)
     if not v then
-        error(("[%s:%i] Assertion failed: "):format(self.strName, self.nLine) ..
+        error(("[%s: %i] Error: "):format(self.strName, self.nLine) ..
             strfmt:format(...), 0)
     end
 
