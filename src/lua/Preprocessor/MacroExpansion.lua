@@ -13,7 +13,7 @@ local pegParseMacro = lpeg.P{
     "first_macro",
     text        = (lpeg.P(1) - "$" - "\"" - "\'") ^ 0,
     literal     = PEG.StringLiteral + PEG.CharLiteral,
-    macro       = "$" * lpeg.C(PEG.ID) * lpeg.Ct(("(" * PEG.ExprList * ")") ^ -1),
+    macro       = "$" * lpeg.C(PEG.ID) * lpeg.Ct((("(" * PEG.ExprList * ")") ^ -1)),
     first_macro = lpeg.V"text" * (lpeg.V"literal" * lpeg.V"text") ^ 0 * PEG.Bounds(lpeg.V"macro")
 }
 
@@ -44,7 +44,7 @@ function MacroExpansion:ExpandMacros(strChunk)
     while true do
         local nMacroBegin, strMacroName, tblMacroParams, nMacroEnd =
             pegParseMacro:match(strChunk)
-        
+
         log.assert(not PEG.IsStringEOF,
             "missing closing quotes '\"'")
 
@@ -58,7 +58,7 @@ function MacroExpansion:ExpandMacros(strChunk)
 
             strChunk = ("%s%s%s"):format(
                 strChunk:sub(1, nMacroBegin - 1),
-                objMacro:Expand(self.objFileInfo, self.tblMacros, unpack(tblMacroParams)),
+                objMacro:Expand(strMacroName, self.objFileInfo, self.tblMacros, unpack(tblMacroParams)),
                 strChunk:sub(nMacroEnd))
         end
     end
