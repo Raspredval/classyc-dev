@@ -68,7 +68,9 @@ main(int argc, const char* argv[]) {
         luaL_loadstring (g_hLuaState, "require \"main\"") ||
         lua_pcall       (g_hLuaState, 0, 0, 0))
     {
-        fputs(lua_tostring(g_hLuaState, -1), stderr);
+        fprintf(stderr, "%s\n",
+            lua_tostring(g_hLuaState, -1));
+
         return EXIT_FAILURE;
     }
 
