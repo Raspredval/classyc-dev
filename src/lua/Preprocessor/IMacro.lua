@@ -8,9 +8,9 @@ local IMacro = oop.newClass()
 ---@param strMacroName  string
 ---@param objFileInfo   FileInfo
 ---@param tblMacros     MacroLookupTable
----@param ... string
+---@param tblParams string[]
 ---@return string
-function IMacro:Expand(strMacroName, objFileInfo, tblMacros, ...)
+function IMacro:Expand(strMacroName, objFileInfo, tblMacros, tblParams)
     return ""
 end
 
