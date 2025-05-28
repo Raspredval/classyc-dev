@@ -137,6 +137,31 @@ function Preprocessor:MacroCurFileDir(strMacroName, objFileInfo, tblMacros, tblP
     return ("\"%s\""):format(strDirName)
 end
 
+---@private
+---@param strMacroName string
+---@param objFileInfo FileInfo
+---@param tblMacros MacroLookupTable
+---@param tblParams string[]
+---@return string
+function Preprocessor:MacroDefined(strMacroName, objFileInfo, tblMacros, tblParams)
+    local tblMacroParams    = #tblParams
+    local nParamNameCount   = #tblMacroParams
+    objFileInfo:Assert(nParamNameCount == 1,
+        "%s macro param mismatch -- expected 1, got %i",
+        strMacroName, nParamNameCount)
+
+    local strParamMacroName  = tblParams[1]
+    objFileInfo.Assert((PEG.ID * PEG.EOF):match(strParamMacroName),
+        "% macro invalid param -- expected an identifier, got %s",
+        strMacroName, strParamMacroName)
+
+    if tblMacros[strParamMacroName] then
+        return "1"
+    else
+        return "0"
+    end
+end
+
 ---@return Preprocessor
 function Preprocessor.New()
     local obj   = setmetatable({
@@ -157,6 +182,12 @@ function Preprocessor.New()
         MacroBuiltin.New(obj, Preprocessor.MacroCurFileName)
     obj.tblMacrosGlobal["CUR_FILE_DIR"] =
         MacroBuiltin.New(obj, Preprocessor.MacroCurFileDir)
+    local objMacroDefined =
+        MacroBuiltin.New(obj, Preprocessor.MacroDefined)
+    obj.tblMacrosGlobal["DEFINED"] =
+        objMacroDefined
+    obj.tblMacrosGlobal["defined"] =
+        objMacroDefined
 
     return obj
 end
