@@ -68,10 +68,10 @@ local Preprocessor = oop.setAsClass({
 ---@param strMacroName string
 ---@param objFileInfo FileInfo
 ---@param tblMacros MacroLookupTable
----@param ... string
+---@param tblParams string[]
 ---@return string
-function Preprocessor:MacroCurLine(strMacroName, objFileInfo, tblMacros, ...)
-    local nParamNameCount   = #...
+function Preprocessor:MacroCurLine(strMacroName, objFileInfo, tblMacros, tblParams)
+    local nParamNameCount   = #tblParams
     objFileInfo:Assert(nParamNameCount == 0,
         "%s macro param mismatch -- expected 0, got %i",
         strMacroName, nParamNameCount)
@@ -83,10 +83,10 @@ end
 ---@param strMacroName string
 ---@param objFileInfo FileInfo
 ---@param tblMacros MacroLookupTable
----@param ... string
+---@param tblParams string[]
 ---@return string
-function Preprocessor:MacroCurFilePath(strMacroName, objFileInfo, tblMacros, ...)
-    local nParamNameCount   = #...
+function Preprocessor:MacroCurFilePath(strMacroName, objFileInfo, tblMacros, tblParams)
+    local nParamNameCount   = #tblParams
     objFileInfo:Assert(nParamNameCount == 0,
         "%s macro param mismatch -- expected 0, got %i",
         strMacroName, nParamNameCount)
@@ -100,10 +100,10 @@ end
 ---@param strMacroName string
 ---@param objFileInfo FileInfo
 ---@param tblMacros MacroLookupTable
----@param ... string
+---@param tblParams string[]
 ---@return string
-function Preprocessor:MacroCurFileName(strMacroName, objFileInfo, tblMacros, ...)
-    local nParamNameCount   = #...
+function Preprocessor:MacroCurFileName(strMacroName, objFileInfo, tblMacros, tblParams)
+    local nParamNameCount   = #tblParams
     objFileInfo:Assert(nParamNameCount == 0,
         "%s macro param mismatch -- expected %0, got %i",
         strMacroName, nParamNameCount)
@@ -120,10 +120,10 @@ end
 ---@param strMacroName string
 ---@param objFileInfo FileInfo
 ---@param tblMacros MacroLookupTable
----@param ... string
+---@param tblParams string[]
 ---@return string
-function Preprocessor:MacroCurFileDir(strMacroName, objFileInfo, tblMacros, ...)
-    local tblMacroParams    = {...}
+function Preprocessor:MacroCurFileDir(strMacroName, objFileInfo, tblMacros, tblParams)
+    local tblMacroParams    = #tblParams
     local nParamNameCount   = #tblMacroParams
     objFileInfo:Assert(nParamNameCount == 0,
         "%s macro param mismatch -- expected 0, got %i",
