@@ -27,7 +27,7 @@ function FileInfo:__gc()
 end
 
 ---@return string
-function FileInfo:Name()
+function FileInfo:Path()
     return self.strName
 end
 
