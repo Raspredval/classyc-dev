@@ -24,13 +24,13 @@ end
 ---@param strMacroName  string
 ---@param objFileInfo   FileInfo
 ---@param tblMacros     MacroLookupTable
----@param ... string
+---@param tblParams string[]
 ---@return string
-function MacroDefined:Expand(strMacroName, objFileInfo, tblMacros, ...)
-    local tblParamNames, tblParamValues =
-        self.tblParamNames, {...}
+function MacroDefined:Expand(strMacroName, objFileInfo, tblMacros, tblParams)
+    local tblParamNames =
+        self.tblParamNames
     local nParamNameCount, nParamValCount =
-        #tblParamNames, #tblParamValues
+        #tblParamNames, #tblParams
     
     objFileInfo:Assert(nParamNameCount == nParamValCount,
         "%s macro param mismatch -- expected %i, got %i",
@@ -47,7 +47,7 @@ function MacroDefined:Expand(strMacroName, objFileInfo, tblMacros, ...)
             "macro parameter shadows existing macro: %s", strParamName)
 
         tblMacrosLocal[strParamName] =
-            MacroDefined.New(tblParamValues[i])
+            MacroDefined.New(tblParams[i])
     end
 
     local macro_expansion =

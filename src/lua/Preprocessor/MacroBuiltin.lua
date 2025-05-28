@@ -2,7 +2,7 @@ local oop, IMacro =
     require "oop",
     require "Preprocessor.IMacro"
 
----@alias OnExpandFunc fun(self: Preprocessor, strMacroName: string, objFileInfo: FileInfo, tblMacros: MacroLookupTable, ... : string) : string
+---@alias OnExpandFunc fun(self: Preprocessor, strMacroName: string, objFileInfo: FileInfo, tblMacros: MacroLookupTable, tblParams : string[]) : string
 
 ---@class MacroBuiltin : IMacro
 ---@field private objPreprocessor Preprocessor
@@ -24,10 +24,10 @@ end
 ---@param strMacroName string
 ---@param objFileInfo FileInfo
 ---@param tblMacros MacroLookupTable
----@param ... string
+---@param tblParams string[]
 ---@return string
-function MacroBuiltin:Expand(strMacroName, objFileInfo, tblMacros, ...)
-    return self.fnOnExpand(self.objPreprocessor, strMacroName, objFileInfo, tblMacros, ...)
+function MacroBuiltin:Expand(strMacroName, objFileInfo, tblMacros, tblParams)
+    return self.fnOnExpand(self.objPreprocessor, strMacroName, objFileInfo, tblMacros, tblParams)
 end
 
 return MacroBuiltin
