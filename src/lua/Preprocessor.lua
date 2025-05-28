@@ -70,11 +70,11 @@ local Preprocessor = oop.setAsClass({
 ---@param tblMacros MacroLookupTable
 ---@param ... string
 ---@return string
-function Preprocessor:MacroLine(strMacroName, objFileInfo, tblMacros, ...)
-    local tblMacroParams    = {...}
-    local nParamNameCount   = #tblMacroParams
-    log.assert(nParamNameCount == 0,
-        "expected 0 params, got %i", nParamNameCount)
+function Preprocessor:MacroCurLine(strMacroName, objFileInfo, tblMacros, ...)
+    local nParamNameCount   = #...
+    objFileInfo:Assert(nParamNameCount == 0,
+        "%s macro param mismatch -- expected 0, got %i",
+        strMacroName, nParamNameCount)
 
     return tostring(objFileInfo:Line())
 end
@@ -85,13 +85,56 @@ end
 ---@param tblMacros MacroLookupTable
 ---@param ... string
 ---@return string
-function Preprocessor:MacroFile(strMacroName, objFileInfo, tblMacros, ...)
+function Preprocessor:MacroCurFilePath(strMacroName, objFileInfo, tblMacros, ...)
+    local nParamNameCount   = #...
+    objFileInfo:Assert(nParamNameCount == 0,
+        "%s macro param mismatch -- expected 0, got %i",
+        strMacroName, nParamNameCount)
+
+    local strFilePath   = objFileInfo:Path()
+
+    return ("\"%s\""):format(strFilePath)
+end
+
+---@private
+---@param strMacroName string
+---@param objFileInfo FileInfo
+---@param tblMacros MacroLookupTable
+---@param ... string
+---@return string
+function Preprocessor:MacroCurFileName(strMacroName, objFileInfo, tblMacros, ...)
+    local nParamNameCount   = #...
+    objFileInfo:Assert(nParamNameCount == 0,
+        "%s macro param mismatch -- expected %0, got %i",
+        strMacroName, nParamNameCount)
+
+    local strFilePath   = objFileInfo:Path()
+    local strBaseName   = log.assert(fs.basename(strFilePath),
+                            "failed to get file base name: %s",
+                            strFilePath)
+
+    return ("\"%s\""):format(strBaseName)
+end
+
+---@private
+---@param strMacroName string
+---@param objFileInfo FileInfo
+---@param tblMacros MacroLookupTable
+---@param ... string
+---@return string
+function Preprocessor:MacroCurFileDir(strMacroName, objFileInfo, tblMacros, ...)
     local tblMacroParams    = {...}
     local nParamNameCount   = #tblMacroParams
-    log.assert(nParamNameCount == 0,
-        "expected 0 params, got %i", nParamNameCount)
+    objFileInfo:Assert(nParamNameCount == 0,
+        "%s macro param mismatch -- expected 0, got %i",
+        strMacroName, nParamNameCount)
 
-    return ("\"%s\""):format(objFileInfo:Name())
+    local strFilePath   = objFileInfo:Path()
+    local strDirName    = log.assert(fs.dirname(strFilePath),
+                            "failed to get file dir name: %s",
+                            strFilePath)
+
+    return ("\"%s\""):format(strDirName)
 end
 
 ---@return Preprocessor
@@ -106,10 +149,14 @@ function Preprocessor.New()
 
     obj.tblMacrosGlobal["__index"] =
         obj.tblMacrosGlobal
-    obj.tblMacrosGlobal["LINE"] =
-        MacroBuiltin.New(obj, Preprocessor.MacroLine)
-    obj.tblMacrosGlobal["FILE"] =
-        MacroBuiltin.New(obj, Preprocessor.MacroFile)
+    obj.tblMacrosGlobal["CUR_LINE"] =
+        MacroBuiltin.New(obj, Preprocessor.MacroCurLine)
+    obj.tblMacrosGlobal["CUR_FILE_PATH"] =
+        MacroBuiltin.New(obj, Preprocessor.MacroCurFilePath)
+    obj.tblMacrosGlobal["CUR_FILE_NAME"] =
+        MacroBuiltin.New(obj, Preprocessor.MacroCurFileName)
+    obj.tblMacrosGlobal["CUR_FILE_DIR"] =
+        MacroBuiltin.New(obj, Preprocessor.MacroCurFileDir)
 
     return obj
 end
@@ -151,7 +198,7 @@ function Preprocessor:PopInputFile()
     local nFileCount    = #self.tblInputFiles
     if nFileCount > 0 then
         self:OutputFile():File():write(
-            "#FILE_END ", self.tblInputFiles[nFileCount]:Name(), "\n")
+            "#FILE_END ", self.tblInputFiles[nFileCount]:Path(), "\n")
         self.tblInputFiles[nFileCount] = nil
     end
 end
@@ -263,9 +310,9 @@ end
 ---@return string
 function Preprocessor:GetLocalFilePath(strLocalFile)
     local input_file    = self:CurInputFile()
-    local strDirname    = log.assert(fs.dirname(input_file:Name()),
+    local strDirname    = log.assert(fs.dirname(input_file:Path()),
                             "failed to get directory name of the source file: %s",
-                            input_file:Name())
+                            input_file:Path())
     local strFilename   = ("%s/%s"):format(strDirname, strLocalFile)
     
     log.assert(fs.access(strFilename),
