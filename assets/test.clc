@@ -75,7 +75,7 @@ export func main() -> c.int {   // means "export function 'main'
 
     c.printf("Hello, world!\n");
     c.printf("%f %f\n", fCircleRadius, fCircleArea);
-    c.printf("%s %i\n", $CUR_FILE_NAME, $CUR_LINE)
+    c.printf("%s %i %i\n", $CUR_FILE_NAME, $CUR_LINE, $DEFINED(GET_MAGIC_NUMBER))
     c.printf("%f\n", $GET_MAGIC_NUMBER($NICE, $DANK));
 
     if (fCircleArea < $DANK)
