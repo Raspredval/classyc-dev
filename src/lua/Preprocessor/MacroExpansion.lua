@@ -58,7 +58,7 @@ function MacroExpansion:ExpandMacros(strChunk)
 
             strChunk = ("%s%s%s"):format(
                 strChunk:sub(1, nMacroBegin - 1),
-                objMacro:Expand(strMacroName, self.objFileInfo, self.tblMacros, unpack(tblMacroParams)),
+                objMacro:Expand(strMacroName, self.objFileInfo, self.tblMacros, tblMacroParams),
                 strChunk:sub(nMacroEnd))
         end
     end
