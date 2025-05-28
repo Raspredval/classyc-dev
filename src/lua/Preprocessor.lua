@@ -123,8 +123,7 @@ end
 ---@param tblParams string[]
 ---@return string
 function Preprocessor:MacroCurFileDir(strMacroName, objFileInfo, tblMacros, tblParams)
-    local tblMacroParams    = #tblParams
-    local nParamNameCount   = #tblMacroParams
+    local nParamNameCount   = #tblParams
     objFileInfo:Assert(nParamNameCount == 0,
         "%s macro param mismatch -- expected 0, got %i",
         strMacroName, nParamNameCount)
@@ -144,8 +143,7 @@ end
 ---@param tblParams string[]
 ---@return string
 function Preprocessor:MacroDefined(strMacroName, objFileInfo, tblMacros, tblParams)
-    local tblMacroParams    = #tblParams
-    local nParamNameCount   = #tblMacroParams
+    local nParamNameCount   = #tblParams
     objFileInfo:Assert(nParamNameCount == 1,
         "%s macro param mismatch -- expected 1, got %i",
         strMacroName, nParamNameCount)
