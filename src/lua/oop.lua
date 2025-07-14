@@ -14,7 +14,7 @@ function oop.newClassFrom(class, baseClass)
         setmetatable(class, baseClass or oop.object)
     ---@cast class oop.object
 
-    function class:New(...)
+    function class.New(...)
         assert(class.__init,
             "creating an instance of abstract class")
         local obj =
