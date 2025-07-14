@@ -7,14 +7,14 @@ local oop, log, IMacro, MacroExpansion =
 ---@class MacroDefined : IMacro
 ---@field private strBody       string
 ---@field private tblParamNames string[]
----@field public  New           fun(strMacroBody: string, ... : string) : MacroDefined
+---@field public  New           fun(strMacroBody: string?, tblParamNames : string[]?) : MacroDefined
 local MacroDefined = oop.newClass(IMacro)
 
----@param strMacroBody string
----@param ... string
-function MacroDefined:__init(strMacroBody, ...)
-    self.strBody        = strMacroBody
-    self.tblParamNames  = {...}
+---@param strMacroBody  string?
+---@param tblParamNames string[]?
+function MacroDefined:__init(strMacroBody, tblParamNames)
+    self.strBody        = strMacroBody or ""
+    self.tblParamNames  = tblParamNames or {}
 end
 
 ---@param strMacroName  string
