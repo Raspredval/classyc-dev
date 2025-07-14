@@ -1,30 +1,49 @@
 local oop = {}
 
----@param tbl table
----@param baseClass table?
----@return table
-function oop.setAsClass(tbl, baseClass)
-    tbl.__index = tbl
-    setmetatable(tbl, baseClass)
-    return tbl
-end
+---@class oop.object
+---@field __init    fun(self: oop.object, ...)?
+---@field New       fun(...) : oop.object
+oop.object = {}
+oop.object.__index = oop.object
 
----@param baseClass table?
----@return table
-function oop.newClass(baseClass)
-    local class = {}
-    oop.setAsClass(class, baseClass)
+---@param class table
+---@param baseClass oop.object?
+---@return oop.object
+function oop.newClassFrom(class, baseClass)
+    class.__index =
+        setmetatable(class, baseClass or oop.object)
+    ---@cast class oop.object
+
+    function class:New(...)
+        assert(class.__init,
+            "creating an instance of abstract class")
+        local obj =
+            setmetatable({}, class)
+        obj:__init(...)
+        return obj
+    end
+
     return class
 end
 
----@param obj table
----@param class table
+---@param baseClass table?
+---@return oop.object
+function oop.newClass(baseClass)
+    local class = {}
+    oop.newClassFrom(class, baseClass)
+    return class
+end
+
+---@param class oop.object
 ---@return boolean
-function oop.isRelatedTo(obj, class)
-    local mt = getmetatable(obj)
+function oop.object:IsDerivedFrom(class)
+    ---@type oop.object?
+    local mt =
+        getmetatable(self)
+
     if mt then
         if mt ~= class then
-            return oop.isRelatedTo(mt, class)
+            return mt:IsDerivedFrom(class)
         else
             return true
         end
