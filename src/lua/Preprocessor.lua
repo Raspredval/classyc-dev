@@ -34,9 +34,10 @@ local pegParseLineComment = lpeg.P{
 
 ---@type Pattern
 local pegCmdDefine =
-    lpeg.C(PEG.ID) *
-    lpeg.Ct(("(" * PEG.IDList * ")") ^ -1) *
-    PEG.Space * lpeg.C(lpeg.P(1) ^ 1)
+    lpeg.C(PEG.ID) * (
+        (PEG.Padding * PEG.EOF) +
+        (lpeg.Ct(("(" * PEG.IDList * ")") ^ -1) * PEG.Space * lpeg.C(lpeg.P(1) ^ 1))
+    )
 
 ---@type Pattern
 local pegCmdUndef =
@@ -304,14 +305,18 @@ function Preprocessor:CmdDefine(strCmdBody)
     local strMacroName, tblParamList, strMacroBody =
         pegCmdDefine:match(strCmdBody)
     
-    log.assert(strMacroName and tblParamList and strMacroBody,
-        "invalid macro definition")
-
-    log.assert(not self.tblMacrosGlobal[strMacroName],
-        "macro already exists: %s", strMacroName)
+    self:CurInputFile():Assert(
+        strMacroName,
+            "invalid macro definition")
+    self:CurInputFile():Assert(
+        not lpeg.P"__":match(strMacroName),
+            "macro names starting with '__' are reserved and cannot be used")
+    self:CurInputFile():Assert(
+        not self.tblMacrosGlobal[strMacroName],
+            "macro already exists: %s", strMacroName)
+    
     self.tblMacrosGlobal[strMacroName] =
-        MacroDefined.New(strMacroBody, unpack(tblParamList))
-
+        MacroDefined.New(strMacroBody, tblParamList)
     self:OutputFile():File():write("\n")
 end
 
