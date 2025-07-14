@@ -13,8 +13,13 @@
 
 #include "lua_fs.h"
 
+
+
 #if defined(__MINGW64__) || defined (__MINGW32__)
-    #define realpath(N, R) _fullpath((R), (N), PATH_MAX)
+inline static char*
+realpath(const char* szInputPath, char* szOutputPath) {
+    return _fullpath(szOutputPath, szInputPath, PATH_MAX);
+}
 #endif
 
 static int
@@ -67,7 +72,7 @@ lua_load_fs(lua_State* L);
 
 
 static char
-    szPathBuffer[PATH_MAX + 1] = "";
+    szPathBuffer[PATH_MAX + 1];
 
 extern void
 PreloadFilesystemAPI(lua_State* L) {
