@@ -2,7 +2,6 @@ local oop = {}
 
 ---@class oop.object
 ---@field __init    fun(self: oop.object, ...)?
----@field New       fun(...) : oop.object
 oop.object = {}
 oop.object.__index = oop.object
 
@@ -12,9 +11,9 @@ oop.object.__index = oop.object
 function oop.newClassFrom(class, baseClass)
     class.__index =
         setmetatable(class, baseClass or oop.object)
-    ---@cast class oop.object
 
     function class.New(...)
+        ---@cast class oop.object
         assert(class.__init,
             "creating an instance of abstract class")
         local obj =
