@@ -26,7 +26,7 @@ function oop.newClassFrom(class, baseClass)
     return class
 end
 
----@param baseClass table?
+---@param baseClass oop.object?
 ---@return oop.object
 function oop.newClass(baseClass)
     local class = {}
