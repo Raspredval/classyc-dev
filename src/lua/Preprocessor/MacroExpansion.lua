@@ -51,7 +51,7 @@ function MacroExpansion:ExpandMacros(strChunk)
         else
             local objMacro  = log.assert(self.tblMacros[strMacroName],
                                 "undefined macro: %s", strMacroName)
-            log.assert(oop.isRelatedTo(objMacro, IMacro),
+            log.assert(objMacro:IsDerivedFrom(IMacro),
                 "'%s' macro name is reserved and cannot be used")
 
             strChunk = ("%s%s%s"):format(
