@@ -2,24 +2,20 @@ local oop, log =
     require "oop",
     require "log"
 
----@class FileInfo
+---@class FileInfo : oop.object
 ---@field private strName   string
 ---@field private fFile     file*
 ---@field private nLine     integer
+---@field public  New       fun(strFilename: string, file_mode: "r" | "w") : FileInfo
 local FileInfo = oop.newClass()
 
 ---@param strFilename string
 ---@param file_mode "r" | "w"
----@return FileInfo
-function FileInfo.New(strFilename, file_mode)
-    local obj   = setmetatable({
-                    strName = strFilename,
-                    fFile   = log.assert(io.open(strFilename, file_mode),
-                                "failed to open file: %s", strFilename),
-                    nLine   = 1
-                }, FileInfo)
-
-    return obj
+function FileInfo:__init(strFilename, file_mode)
+    self.strName    = strFilename
+    self.fFile      = log.assert(io.open(strFilename, file_mode),
+                        "failed to open file: %s", strFilename)
+    self.nLine      = 1
 end
 
 function FileInfo:__gc()

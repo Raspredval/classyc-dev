@@ -52,15 +52,16 @@ local pegParseSystemFile =
 
 ---@alias Command fun(self: Preprocessor, strCmdBody: string)
 
----@class Preprocessor
+---@class Preprocessor : oop.object
 ---@field private tblMacrosGlobal       MacroLookupTable
 ---@field private tblInputFiles         FileInfo[]
 ---@field private tblAlreadyRequired    table<string, boolean>
 ---@field private objOutputFile         FileInfo?
 ---@field private bDisabledSource       boolean
+---@field public  New                   fun() : Preprocessor
 --- static fields:
 ---@field private tblCommands           table<string, Command>
-local Preprocessor = oop.setAsClass({
+local Preprocessor = oop.newClassFrom({
         tblCommands = {}
     })
 
@@ -160,34 +161,29 @@ function Preprocessor:MacroDefined(strMacroName, objFileInfo, tblMacros, tblPara
     end
 end
 
----@return Preprocessor
-function Preprocessor.New()
-    local obj   = setmetatable({
-                    tblMacrosGlobal     = {},
-                    tblInputFiles       = {},
-                    tblAlreadyRequired  = {},
-                    objOutputFile       = nil,
-                    bDisabledSource     = false
-                }, Preprocessor)
+function Preprocessor:__init()
+    self.tblMacrosGlobal    = {}
+    self.tblInputFiles      = {}
+    self.tblAlreadyRequired = {}
+    self.objOutputFile      = nil
+    self.bDisabledSource    = false
 
-    obj.tblMacrosGlobal["__index"] =
-        obj.tblMacrosGlobal
-    obj.tblMacrosGlobal["CUR_LINE"] =
-        MacroBuiltin.New(obj, Preprocessor.MacroCurLine)
-    obj.tblMacrosGlobal["CUR_FILE_PATH"] =
-        MacroBuiltin.New(obj, Preprocessor.MacroCurFilePath)
-    obj.tblMacrosGlobal["CUR_FILE_NAME"] =
-        MacroBuiltin.New(obj, Preprocessor.MacroCurFileName)
-    obj.tblMacrosGlobal["CUR_FILE_DIR"] =
-        MacroBuiltin.New(obj, Preprocessor.MacroCurFileDir)
+    self.tblMacrosGlobal["__index"] =
+        self.tblMacrosGlobal
+    self.tblMacrosGlobal["CUR_LINE"] =
+        MacroBuiltin.New(self, Preprocessor.MacroCurLine)
+    self.tblMacrosGlobal["CUR_FILE_PATH"] =
+        MacroBuiltin.New(self, Preprocessor.MacroCurFilePath)
+    self.tblMacrosGlobal["CUR_FILE_NAME"] =
+        MacroBuiltin.New(self, Preprocessor.MacroCurFileName)
+    self.tblMacrosGlobal["CUR_FILE_DIR"] =
+        MacroBuiltin.New(self, Preprocessor.MacroCurFileDir)
     local objMacroDefined =
-        MacroBuiltin.New(obj, Preprocessor.MacroDefined)
-    obj.tblMacrosGlobal["DEFINED"] =
+        MacroBuiltin.New(self, Preprocessor.MacroDefined)
+    self.tblMacrosGlobal["DEFINED"] =
         objMacroDefined
-    obj.tblMacrosGlobal["defined"] =
+    self.tblMacrosGlobal["defined"] =
         objMacroDefined
-
-    return obj
 end
 
 ---@param strInputFile string

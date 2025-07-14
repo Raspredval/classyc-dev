@@ -5,20 +5,16 @@ local oop, log, IMacro, MacroExpansion =
     require "Preprocessor.MacroExpansion"
 
 ---@class MacroDefined : IMacro
----@field private strBody string
+---@field private strBody       string
 ---@field private tblParamNames string[]
+---@field public  New           fun(strMacroBody: string, ... : string) : MacroDefined
 local MacroDefined = oop.newClass(IMacro)
 
 ---@param strMacroBody string
 ---@param ... string
----@return MacroDefined
-function MacroDefined.New(strMacroBody, ...)
-    local obj   = setmetatable({
-                    strBody         = strMacroBody,
-                    tblParamNames   = {...}
-                }, MacroDefined)
-
-    return obj
+function MacroDefined:__init(strMacroBody, ...)
+    self.strBody        = strMacroBody
+    self.tblParamNames  = {...}
 end
 
 ---@param strMacroName  string

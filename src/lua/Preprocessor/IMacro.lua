@@ -1,8 +1,6 @@
-local oop, log =
-    require "oop",
-    require "log"
+local oop = require "oop"
 
----@class IMacro
+---@class IMacro : oop.object
 local IMacro = oop.newClass()
 
 ---@param strMacroName  string

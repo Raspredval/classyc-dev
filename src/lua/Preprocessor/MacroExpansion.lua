@@ -21,21 +21,19 @@ local pegParseMacro = lpeg.P{
 
 ---@alias MacroLookupTable table<string, IMacro>
 
----@class MacroExpansion
+---@class MacroExpansion : oop.object
 ---@field private objFileInfo       FileInfo
 ---@field private tblMacros         MacroLookupTable
+---@field public  New               fun(objFileInfo: FileInfo, tblMacros: MacroLookupTable) : MacroExpansion
 local MacroExpansion = oop.newClass()
 
 ---@param objFileInfo FileInfo
 ---@param tblMacros MacroLookupTable
----@return MacroExpansion
-function MacroExpansion.New(objFileInfo, tblMacros)
-    local obj   = setmetatable({
-                    objFileInfo = objFileInfo,
-                    tblMacros   = tblMacros,
-                }, MacroExpansion)
-
-    return obj
+function MacroExpansion:__init(objFileInfo, tblMacros)
+    self.objFileInfo =
+        objFileInfo
+    self.tblMacros =
+        tblMacros
 end
 
 ---@param strChunk string
