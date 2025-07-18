@@ -10,19 +10,19 @@ local oop, lpeg, PEG, fs, log, FileInfo, MacroDefined, MacroBuiltin, MacroExpans
     require "Preprocessor.MacroExpansion"
 
 ---@type Pattern
-local pegParseCommandName =
+local pegParseCommandName   =
     PEG.Padding *
     ("#" * lpeg.C(PEG.ID)) * lpeg.Cp()
 
 ---@type Pattern
-local pegParseCommandBody =
+local pegParseCommandBody   =
     PEG.Padding *
     lpeg.C(lpeg.P(1) ^ 1)
 
 ---@diagnostic disable missing-fields
 
 ---@type Pattern
-local pegParseLineComment = lpeg.P{
+local pegParseLineComment   = lpeg.P{
     "first_comment",
     text            = (lpeg.P(1) - "//" - "\"" - "\'") ^ 0,
     literal         = PEG.StringLiteral + PEG.CharLiteral,
@@ -309,12 +309,16 @@ function Preprocessor:CmdDefine(strCmdBody)
         strMacroName,
             "invalid macro definition")
     self:CurInputFile():Assert(
-        not lpeg.P"__":match(strMacroName),
-            "macro names starting with '__' are reserved and cannot be used")
-    self:CurInputFile():Assert(
         not self.tblMacrosGlobal[strMacroName],
             "macro already exists: %s", strMacroName)
-    
+    self:CurInputFile():Assert(
+        not PEG.DoubleUnderscore:match(strMacroName),
+            "macro names starting with '__' are reserved and cannot be used")
+    for i, strParamName in ipairs(tblParamList) do
+        self:CurInputFile():Assert(not PEG.DoubleUnderscore:match(strParamName),
+            "macro param names starting with '__' are reserved and cannot be used")
+    end
+
     self.tblMacrosGlobal[strMacroName] =
         MacroDefined.New(strMacroBody, tblParamList)
     self:OutputFile():File():write("\n")
