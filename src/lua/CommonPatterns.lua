@@ -18,6 +18,10 @@ function PEG.Bounds(pegPattern)
 end
 
 ---@type Pattern
+PEG.DoubleUnderscore =
+    lpeg.P"__"
+
+---@type Pattern
 PEG.ID =
     (PEG.Alpha + "_") * ((PEG.Alnum + "_") ^ 0)
 
