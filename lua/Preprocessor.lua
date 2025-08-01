@@ -265,7 +265,7 @@ function Preprocessor:PushInputFile(strFilename)
         FileInfo.New(strRealPath, "r")
 
     self:OutputFile():File():write(
-        "#FILE_BEG ", strRealPath, "\n")
+        "#FILE_BEG \"", strRealPath, "\"\n")
 end
 
 ---@private
@@ -273,7 +273,7 @@ function Preprocessor:PopInputFile()
     local nFileCount    = #self.tblInputFiles
     if nFileCount > 0 then
         self:OutputFile():File():write(
-            "#FILE_END ", self.tblInputFiles[nFileCount]:Path(), "\n")
+            "#FILE_END \"", self.tblInputFiles[nFileCount]:Path(), "\"\n")
         self.tblInputFiles[nFileCount] = nil
     end
 end
