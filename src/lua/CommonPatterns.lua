@@ -42,6 +42,12 @@ PEG.StringLiteral =
 PEG.CharLiteral =
     "\'" * (("\\" * lpeg.P(1)) + (lpeg.P(1) - "\'")) * "\'"
 
+---@type Pattern
+PEG.StringLiteralContents =
+    "\"" *
+    lpeg.C((("\\" * lpeg.P(1)) + (lpeg.P(1) - "\"")) ^ 0) *
+    (pegCatchStringEOF + pegResetStringEOF)
+
 ---@diagnostic disable missing-fields
 
 ---@param strExprListItem string
