@@ -162,6 +162,11 @@ function Preprocessor:MacroDefined(strMacroName, objFileInfo, tblMacros, tblPara
     end
 end
 
+---@private
+---@param strMacroName string
+---@param objFileInfo FileInfo
+---@param tblMacros MacroLookupTable
+---@param tblParams string[]
 function Preprocessor:MacroFormat(strMacroName, objFileInfo, tblMacros, tblParams)
     local nParamCount   = #tblParams
     objFileInfo:Assert(nParamCount >= 1,
@@ -180,6 +185,24 @@ function Preprocessor:MacroFormat(strMacroName, objFileInfo, tblMacros, tblParam
     local macro_expansion   = MacroExpansion.New(
                                 objFileInfo, tblFormatArgs)
     return ("\"%s\""):format(macro_expansion:ExpandMacros(strFormat):gsub("\"", "\\\""))
+end
+
+---@private
+---@param strMacroName string
+---@param objFileInfo FileInfo
+---@param tblMacros MacroLookupTable
+---@param tblParams string[]
+function Preprocessor:MacroStripString(strMacroName, objFileInfo, tblMacros, tblParams)
+    local nParamCount   = #tblParams
+    objFileInfo:Assert(nParamCount == 1,
+        "%s macro param mismatch -- expected 1, got %i",
+        strMacroName, nParamCount)
+    local macro_expansion = MacroExpansion.New(objFileInfo, tblMacros)
+    local strLiteral    = macro_expansion:ExpandMacros(tblParams[1])
+    local strStriped    = PEG.StringLiteralContents:match(strLiteral)
+    return objFileInfo:Assert(strStriped,
+        "%s macro invalid param -- expected a string literal, got %s",
+        strMacroName, strLiteral)
 end
 
 function Preprocessor:__init()
@@ -201,16 +224,16 @@ function Preprocessor:__init()
         MacroBuiltin.New(self, Preprocessor.MacroCurFileDir)
     local objMacroDefined =
         MacroBuiltin.New(self, Preprocessor.MacroDefined)
-    self.tblMacrosGlobal["DEFINED"] =
-        objMacroDefined
-    self.tblMacrosGlobal["defined"] =
-        objMacroDefined
+    self.tblMacrosGlobal["DEFINED"] = objMacroDefined
+    self.tblMacrosGlobal["defined"] = objMacroDefined
     local objMacroFormat =
         MacroBuiltin.New(self, Preprocessor.MacroFormat)
-    self.tblMacrosGlobal["FORMAT"] =
-        objMacroFormat
-    self.tblMacrosGlobal["format"] =
-        objMacroFormat
+    self.tblMacrosGlobal["FORMAT"] = objMacroFormat
+    self.tblMacrosGlobal["format"] = objMacroFormat
+    local objMacroStripString =
+        MacroBuiltin.New(self, Preprocessor.MacroStripString)
+    self.tblMacrosGlobal["STR_STRIP"] = objMacroStripString
+    self.tblMacrosGlobal["str_strip"] = objMacroStripString
 end
 
 ---@param strInputFile string
