@@ -171,13 +171,13 @@ function Preprocessor:__init()
 
     self.tblMacrosGlobal["__index"] =
         self.tblMacrosGlobal
-    self.tblMacrosGlobal["CUR_LINE"] =
+    self.tblMacrosGlobal["LINE"] =
         MacroBuiltin.New(self, Preprocessor.MacroCurLine)
-    self.tblMacrosGlobal["CUR_FILE_PATH"] =
+    self.tblMacrosGlobal["FILE_PATH"] =
         MacroBuiltin.New(self, Preprocessor.MacroCurFilePath)
-    self.tblMacrosGlobal["CUR_FILE_NAME"] =
+    self.tblMacrosGlobal["FILE_NAME"] =
         MacroBuiltin.New(self, Preprocessor.MacroCurFileName)
-    self.tblMacrosGlobal["CUR_FILE_DIR"] =
+    self.tblMacrosGlobal["FILE_DIR"] =
         MacroBuiltin.New(self, Preprocessor.MacroCurFileDir)
     local objMacroDefined =
         MacroBuiltin.New(self, Preprocessor.MacroDefined)
