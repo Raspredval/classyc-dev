@@ -39,7 +39,7 @@ end
 ---@param v T?
 ---@param strfmt string
 ---@param ... any
----@return T?
+---@return T
 function log.assert(v, strfmt, ...)
     if not v then
         error("Assertion failed: " .. strfmt:format(...), 2)
