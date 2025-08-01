@@ -24,11 +24,6 @@ add_executable(${PROJECT_NAME}
     "lua/Preprocessor/MacroDefined.lua"
     "lua/Preprocessor/MacroExpansion.lua")
 
-
-if (NOT EXISTS "build/")
-    file(MAKE_DIRECTORY "build/")
-endif()
-
 if (NOT EXISTS "bytecode/")
     file(MAKE_DIRECTORY "bytecode/")
     file(MAKE_DIRECTORY "bytecode/Preprocessor/")
