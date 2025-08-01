@@ -73,10 +73,10 @@ local Preprocessor = oop.newClassFrom({
 ---@param tblParams string[]
 ---@return string
 function Preprocessor:MacroCurLine(strMacroName, objFileInfo, tblMacros, tblParams)
-    local nParamNameCount   = #tblParams
-    objFileInfo:Assert(nParamNameCount == 0,
+    local nParamCount   = #tblParams
+    objFileInfo:Assert(nParamCount == 0,
         "%s macro param mismatch -- expected 0, got %i",
-        strMacroName, nParamNameCount)
+        strMacroName, nParamCount)
 
     return tostring(objFileInfo:Line())
 end
@@ -88,10 +88,10 @@ end
 ---@param tblParams string[]
 ---@return string
 function Preprocessor:MacroCurFilePath(strMacroName, objFileInfo, tblMacros, tblParams)
-    local nParamNameCount   = #tblParams
-    objFileInfo:Assert(nParamNameCount == 0,
+    local nParamCount   = #tblParams
+    objFileInfo:Assert(nParamCount == 0,
         "%s macro param mismatch -- expected 0, got %i",
-        strMacroName, nParamNameCount)
+        strMacroName, nParamCount)
 
     local strFilePath   = objFileInfo:Path()
 
@@ -105,10 +105,10 @@ end
 ---@param tblParams string[]
 ---@return string
 function Preprocessor:MacroCurFileName(strMacroName, objFileInfo, tblMacros, tblParams)
-    local nParamNameCount   = #tblParams
-    objFileInfo:Assert(nParamNameCount == 0,
+    local nParamCount   = #tblParams
+    objFileInfo:Assert(nParamCount == 0,
         "%s macro param mismatch -- expected %0, got %i",
-        strMacroName, nParamNameCount)
+        strMacroName, nParamCount)
 
     local strFilePath   = objFileInfo:Path()
     local strBaseName   = log.assert(fs.basename(strFilePath),
@@ -125,10 +125,10 @@ end
 ---@param tblParams string[]
 ---@return string
 function Preprocessor:MacroCurFileDir(strMacroName, objFileInfo, tblMacros, tblParams)
-    local nParamNameCount   = #tblParams
-    objFileInfo:Assert(nParamNameCount == 0,
+    local nParamCount   = #tblParams
+    objFileInfo:Assert(nParamCount == 0,
         "%s macro param mismatch -- expected 0, got %i",
-        strMacroName, nParamNameCount)
+        strMacroName, nParamCount)
 
     local strFilePath   = objFileInfo:Path()
     local strDirName    = log.assert(fs.dirname(strFilePath),
@@ -162,6 +162,26 @@ function Preprocessor:MacroDefined(strMacroName, objFileInfo, tblMacros, tblPara
     end
 end
 
+function Preprocessor:MacroFormat(strMacroName, objFileInfo, tblMacros, tblParams)
+    local nParamCount   = #tblParams
+    objFileInfo:Assert(nParamCount >= 1,
+        "%s macro param mismatch -- expected at least 1, got %i",
+        strMacroName, nParamCount)
+    
+    local strFormat         = objFileInfo:Assert(PEG.StringLiteralContents:match(tblParams[1]),
+                                "%s macro invalid param -- first argument must be a string literal")
+    local tblFormatArgs     = setmetatable({}, tblMacros)
+    tblFormatArgs.__index   = tblFormatArgs
+    for i = 2, nParamCount do
+        tblFormatArgs[tostring(i - 1)] =
+            MacroDefined.New(tblParams[i])
+    end
+
+    local macro_expansion   = MacroExpansion.New(
+                                objFileInfo, tblFormatArgs)
+    return ("\"%s\""):format(macro_expansion:ExpandMacros(strFormat):gsub("\"", "\\\""))
+end
+
 function Preprocessor:__init()
     self.tblMacrosGlobal    = {}
     self.tblInputFiles      = {}
@@ -185,6 +205,12 @@ function Preprocessor:__init()
         objMacroDefined
     self.tblMacrosGlobal["defined"] =
         objMacroDefined
+    local objMacroFormat =
+        MacroBuiltin.New(self, Preprocessor.MacroFormat)
+    self.tblMacrosGlobal["FORMAT"] =
+        objMacroFormat
+    self.tblMacrosGlobal["format"] =
+        objMacroFormat
 end
 
 ---@param strInputFile string
