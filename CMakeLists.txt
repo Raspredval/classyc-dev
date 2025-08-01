@@ -104,7 +104,7 @@ target_compile_definitions(${PROJECT_NAME}
         BUILD_TYPE="${CMAKE_BUILD_TYPE}")
 
 if (${CMAKE_C_COMPILER_ID} STREQUAL "GNU" OR ${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
-    message("Using ${CMAKE_C_COMPILER_ID} c compiler")
+    message("Using ${CMAKE_C_COMPILER_ID} C compiler")
     target_compile_options(${PROJECT_NAME}
         PRIVATE
             "-Wall"
@@ -113,5 +113,5 @@ if (${CMAKE_C_COMPILER_ID} STREQUAL "GNU" OR ${CMAKE_C_COMPILER_ID} STREQUAL "Cl
             "-Werror"
             "-Wno-unused-parameter")
 else()
-    message(FATAL_ERROR "Unsupported c compiler (supported: gcc, clang)")
+    message(FATAL_ERROR "Unsupported C compiler (supported: gcc, clang)")
 endif()
