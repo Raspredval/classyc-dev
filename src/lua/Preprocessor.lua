@@ -167,7 +167,7 @@ end
 ---@param objFileInfo FileInfo
 ---@param tblMacros MacroLookupTable
 ---@param tblParams string[]
-function Preprocessor:MacroFormat(strMacroName, objFileInfo, tblMacros, tblParams)
+function Preprocessor:MacroStrFormat(strMacroName, objFileInfo, tblMacros, tblParams)
     local nParamCount   = #tblParams
     objFileInfo:Assert(nParamCount >= 1,
         "%s macro param mismatch -- expected at least 1, got %i",
@@ -227,9 +227,9 @@ function Preprocessor:__init()
     self.tblMacrosGlobal["DEFINED"] = objMacroDefined
     self.tblMacrosGlobal["defined"] = objMacroDefined
     local objMacroFormat =
-        MacroBuiltin.New(self, Preprocessor.MacroFormat)
-    self.tblMacrosGlobal["FORMAT"] = objMacroFormat
-    self.tblMacrosGlobal["format"] = objMacroFormat
+        MacroBuiltin.New(self, Preprocessor.MacroStrFormat)
+    self.tblMacrosGlobal["STR_FORMAT"] = objMacroFormat
+    self.tblMacrosGlobal["str_format"] = objMacroFormat
     local objMacroStripString =
         MacroBuiltin.New(self, Preprocessor.MacroStripString)
     self.tblMacrosGlobal["STR_STRIP"] = objMacroStripString
