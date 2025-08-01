@@ -1,5 +1,6 @@
 /build
 /bytecode
 /.cache
+/.vscode
 /compile_commands.json
 /assets
