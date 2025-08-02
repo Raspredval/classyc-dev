@@ -33,15 +33,15 @@ function MacroExpansion.ExpandAllMacros(strChunk, objFileInfo, tblMacros)
         local nMacroBegin, strMacroName, tblMacroParams, nMacroEnd =
             pegParseMacro:match(strChunk)
 
-        log.assert(not PEG.IsStringEOF,
-            "missing closing quotes '\"'")
+        objFileInfo:Assert(not PEG.IsStringEOF,
+            "missing a closing string literal quote (\")")
 
         if not strMacroName then
             return strChunk
         else
-            local objMacro  = log.assert(tblMacros[strMacroName],
+            local objMacro  = objFileInfo:Assert(tblMacros[strMacroName],
                                 "undefined macro: %s", strMacroName)
-            log.assert(objMacro:IsDerivedFrom(IMacro),
+            objFileInfo:Assert(objMacro:IsDerivedFrom(IMacro),
                 "'%s' macro name is reserved and cannot be used")
 
             strChunk = ("%s%s%s"):format(
