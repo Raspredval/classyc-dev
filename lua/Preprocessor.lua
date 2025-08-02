@@ -175,9 +175,9 @@ function Preprocessor:MacroStrFormat(strMacroName, objFileInfo, tblMacros, tblPa
         strMacroName, nParamCount)
     
     local strFormat         = IMacro.ExpandAllMacros(tblParams[1], objFileInfo, tblMacros)
-    objFileInfo:Assert(PEG.StringLiteralContents:match(strFormat),
-        "$%s: invalid first param -- expected a string literal, got %s",
-        strMacroName, strFormat)
+    local strFormatContents = objFileInfo:Assert(PEG.StringLiteralContents:match(strFormat),
+                                "$%s: invalid first param -- expected a string literal, got %s",
+                                strMacroName, strFormat)
     local tblFormatArgs     = setmetatable({}, tblMacros)
     tblFormatArgs.__index   = tblFormatArgs
     for i = 2, nParamCount do
@@ -186,7 +186,7 @@ function Preprocessor:MacroStrFormat(strMacroName, objFileInfo, tblMacros, tblPa
     end
 
     local strExpandedFormat = IMacro.ExpandAllMacros(
-                                strFormat, objFileInfo, tblFormatArgs)
+                                strFormatContents, objFileInfo, tblFormatArgs)
     return ("\"%s\""):format(strExpandedFormat:gsub("\"", "\\\""))
 end
 
