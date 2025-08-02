@@ -223,10 +223,10 @@ function Preprocessor:MacroStrEqual(strMacroName, objFileInfo, tblMacros, tblPar
 
     objFileInfo:Assert(PEG.StringLiteral:match(strLHS),
         "%s macro invalid first param -- expected a string literal, got %s",
-        strMacroName, tblParams[1])
+        strMacroName, strLHS)
     objFileInfo:Assert(PEG.StringLiteral:match(strRHS),
         "%s macro invalid second param -- expected a string literal, got %s",
-        strMacroName, tblParams[2])
+        strMacroName, strRHS)
 
     if strLHS == strRHS then
         return "true"
