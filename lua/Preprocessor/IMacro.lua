@@ -47,10 +47,9 @@ function IMacro.ExpandAllMacros(strChunk, objFileInfo, tblMacros)
         if not strMacroName then
             return strChunk
         else
-            local objMacro  = objFileInfo:Assert(tblMacros[strMacroName],
-                                "undefined macro: %s", strMacroName)
-            objFileInfo:Assert(objMacro:IsDerivedFrom(IMacro),
-                "'%s' macro name is reserved and cannot be used")
+            local objMacro  = tblMacros[strMacroName]
+            objFileInfo:Assert(objMacro and objMacro:IsDerivedFrom(IMacro),
+                "undefined macro: %s", strMacroName)
 
             strChunk = ("%s%s%s"):format(
                 strChunk:sub(1, nMacroBegin - 1),
