@@ -60,7 +60,6 @@ main(int argc, const char* argv[]) {
             { "Preprocessor.IMacro",        luaJIT_BC_Preprocessor_IMacro,          luaJIT_BC_Preprocessor_IMacro_SIZE          },
             { "Preprocessor.MacroBuiltin",  luaJIT_BC_Preprocessor_MacroBuiltin,    luaJIT_BC_Preprocessor_MacroBuiltin_SIZE    },
             { "Preprocessor.MacroDefined",  luaJIT_BC_Preprocessor_MacroDefined,    luaJIT_BC_Preprocessor_MacroDefined_SIZE    },
-            { "Preprocessor.MacroExpansion",luaJIT_BC_Preprocessor_MacroExpansion,  luaJIT_BC_Preprocessor_MacroExpansion_SIZE  },
             { NULL,                         NULL,                                   0                                           }
         };
     
