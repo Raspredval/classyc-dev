@@ -39,9 +39,18 @@ function FileInfo:File()
     return self.fFile
 end
 
+---@param strfmt string
+---@param ... any
+function FileInfo:Print(strfmt, ...)
+    log.print("[file: %s][line %i] " .. strfmt,
+        self.strName, self.nLine, ...)
+end
+
+---@param strfmt string
+---@param ... any
 function FileInfo:Error(strfmt, ...)
-    error(("[file: %s][line: %i] Error: "):format(self.strName, self.nLine) ..
-        strfmt:format(...), 0)
+    error(("[file: %s][line: %i] Error: " .. strfmt):
+        format(self.strName, self.nLine, ...), 0)
 end
 
 ---@generic T
@@ -51,8 +60,8 @@ end
 ---@return T
 function FileInfo:Assert(v, strfmt, ...)
     if not v then
-        error(("[file: %s][line: %i] Error: "):format(self.strName, self.nLine) ..
-            strfmt:format(...), 0)
+        error(("[file: %s][line: %i] Error: " .. strfmt):
+            format(self.strName, self.nLine, ...), 0)
     end
 
     return v
