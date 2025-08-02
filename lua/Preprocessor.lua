@@ -214,17 +214,20 @@ end
 ---@param tblParams string[]
 ---@return string
 function Preprocessor:MacroStrEqual(strMacroName, objFileInfo, tblMacros, tblParams)
-    local nParamCount   = #tblParams
+    local nParamCount       = #tblParams
     objFileInfo:Assert(nParamCount == 2,
         "%s macro param mismatch -- expected 2, got %i",
         strMacroName, nParamCount)
-    local strLHS        = objFileInfo:Assert(PEG.StringLiteralContents:match(tblParams[1]),
-                            "%s macro invalid first param -- expected a string literal, got %s",
-                            strMacroName, tblParams[1])
-    local strRHS        = objFileInfo:Assert(PEG.StringLiteralContents:match(tblParams[1]),
-                            "%s macro invalid second param -- expected a string literal, got %s",
-                            strMacroName, tblParams[2])
-    if strLHS == strRHS then
+    local strLHS            = objFileInfo:Assert(PEG.StringLiteralContents:match(tblParams[1]),
+                                "%s macro invalid first param -- expected a string literal, got %s",
+                                strMacroName, tblParams[1])
+    local strRHS            = objFileInfo:Assert(PEG.StringLiteralContents:match(tblParams[1]),
+                                "%s macro invalid second param -- expected a string literal, got %s",
+                                strMacroName, tblParams[2])
+    local strExpandedLHS    = IMacro.ExpandAllMacros(strLHS, objFileInfo, tblMacros)
+    local strExpandedRHS    = IMacro.ExpandAllMacros(strRHS, objFileInfo, tblMacros)
+
+    if strExpandedLHS == strExpandedRHS then
         return "true"
     else
         return "false"
