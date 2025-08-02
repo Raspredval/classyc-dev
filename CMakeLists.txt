@@ -24,9 +24,8 @@ add_executable(${PROJECT_NAME}
     "lua/Preprocessor/MacroDefined.lua"
     "lua/Preprocessor/MacroExpansion.lua")
 
-if (NOT EXISTS "bytecode/")
-    file(MAKE_DIRECTORY "bytecode/")
-    file(MAKE_DIRECTORY "bytecode/Preprocessor/")
+if (NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}")
+    file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 endif()
 
 if (${CMAKE_HOST_SYSTEM_NAME} STREQUAL "Windows")
@@ -59,10 +58,17 @@ else()
     set(LUAJIT_ARGS -b -s -t h)
 endif()
 
+set(BYTECODE_DIR "${CMAKE_CURRENT_BINARY_DIR}/lua_bytecode")
+
+if (NOT EXISTS "${BYTECODE_DIR}")
+    file(MAKE_DIRECTORY "${BYTECODE_DIR}")
+    file(MAKE_DIRECTORY "${BYTECODE_DIR}/Preprocessor/")
+endif()
+
 target_include_directories(${PROJECT_NAME}
     PRIVATE
         "include/"
-        "bytecode/")
+        "${BYTECODE_DIR}/")
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
         luajit-5.1)
@@ -70,31 +76,31 @@ target_link_libraries(${PROJECT_NAME}
 add_custom_target(CompileLua
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     COMMAND ${LUAJIT_CLI_PATH} ${LUAJIT_ARGS} -n "CommonPatterns"
-        "lua/CommonPatterns.lua" "bytecode/CommonPatterns.lua.h"
+        "lua/CommonPatterns.lua" "${BYTECODE_DIR}/CommonPatterns.lua.h"
     COMMAND ${LUAJIT_CLI_PATH} ${LUAJIT_ARGS} -n "FileInfo"
-        "lua/FileInfo.lua" "bytecode/FileInfo.lua.h"
+        "lua/FileInfo.lua" "${BYTECODE_DIR}/FileInfo.lua.h"
     COMMAND ${LUAJIT_CLI_PATH} ${LUAJIT_ARGS} -n "log"
-        "lua/log.lua" "bytecode/log.lua.h"
+        "lua/log.lua" "${BYTECODE_DIR}/log.lua.h"
     COMMAND ${LUAJIT_CLI_PATH} ${LUAJIT_ARGS} -n "main"
-        "lua/main.lua" "bytecode/main.lua.h"
+        "lua/main.lua" "${BYTECODE_DIR}/main.lua.h"
     COMMAND ${LUAJIT_CLI_PATH} ${LUAJIT_ARGS} -n "oop"
-        "lua/oop.lua" "bytecode/oop.lua.h"
+        "lua/oop.lua" "${BYTECODE_DIR}/oop.lua.h"
     COMMAND ${LUAJIT_CLI_PATH} ${LUAJIT_ARGS} -n "Preprocessor"
-        "lua/Preprocessor.lua" "bytecode/Preprocessor.lua.h"
+        "lua/Preprocessor.lua" "${BYTECODE_DIR}/Preprocessor.lua.h"
     COMMAND ${LUAJIT_CLI_PATH} ${LUAJIT_ARGS} -n "Preprocessor.IMacro"
-        "lua/Preprocessor/IMacro.lua" "bytecode/Preprocessor/IMacro.lua.h"
+        "lua/Preprocessor/IMacro.lua" "${BYTECODE_DIR}/Preprocessor/IMacro.lua.h"
     COMMAND ${LUAJIT_CLI_PATH} ${LUAJIT_ARGS} -n "Preprocessor.MacroBuiltin"
-        "lua/Preprocessor/MacroBuiltin.lua" "bytecode/Preprocessor/MacroBuiltin.lua.h"
+        "lua/Preprocessor/MacroBuiltin.lua" "${BYTECODE_DIR}/Preprocessor/MacroBuiltin.lua.h"
     COMMAND ${LUAJIT_CLI_PATH} ${LUAJIT_ARGS} -n "Preprocessor.MacroDefined"
-        "lua/Preprocessor/MacroDefined.lua" "bytecode/Preprocessor/MacroDefined.lua.h"
+        "lua/Preprocessor/MacroDefined.lua" "${BYTECODE_DIR}/Preprocessor/MacroDefined.lua.h"
     COMMAND ${LUAJIT_CLI_PATH} ${LUAJIT_ARGS} -n "Preprocessor.MacroExpansion"
-        "lua/Preprocessor/MacroExpansion.lua" "bytecode/Preprocessor/MacroExpansion.lua.h")
+        "lua/Preprocessor/MacroExpansion.lua" "${BYTECODE_DIR}/Preprocessor/MacroExpansion.lua.h")
 add_dependencies(${PROJECT_NAME}
     CompileLua)
 
 target_compile_definitions(${PROJECT_NAME}
     PRIVATE
-        CLC_VERSION="ClassyC ${CMAKE_PROJECT_VERSION}"
+        CLC_VERSION="ClassyCC ${CMAKE_PROJECT_VERSION}"
         CC_VERSION="${CMAKE_C_COMPILER_ID} ${CMAKE_C_COMPILER_VERSION}"
         BUILD_TYPE="${CMAKE_BUILD_TYPE}")
 
