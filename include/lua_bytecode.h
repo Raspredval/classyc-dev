@@ -12,6 +12,5 @@
 #include "Preprocessor/IMacro.lua.h"
 #include "Preprocessor/MacroBuiltin.lua.h"
 #include "Preprocessor/MacroDefined.lua.h"
-#include "Preprocessor/MacroExpansion.lua.h"
 
 #endif

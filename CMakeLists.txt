@@ -21,8 +21,7 @@ add_executable(${PROJECT_NAME}
     "lua/Preprocessor.lua"
     "lua/Preprocessor/IMacro.lua"
     "lua/Preprocessor/MacroBuiltin.lua"
-    "lua/Preprocessor/MacroDefined.lua"
-    "lua/Preprocessor/MacroExpansion.lua")
+    "lua/Preprocessor/MacroDefined.lua")
 
 if (NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}")
     file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
@@ -92,9 +91,7 @@ add_custom_target(CompileLua
     COMMAND ${LUAJIT_CLI_PATH} ${LUAJIT_ARGS} -n "Preprocessor.MacroBuiltin"
         "lua/Preprocessor/MacroBuiltin.lua" "${BYTECODE_DIR}/Preprocessor/MacroBuiltin.lua.h"
     COMMAND ${LUAJIT_CLI_PATH} ${LUAJIT_ARGS} -n "Preprocessor.MacroDefined"
-        "lua/Preprocessor/MacroDefined.lua" "${BYTECODE_DIR}/Preprocessor/MacroDefined.lua.h"
-    COMMAND ${LUAJIT_CLI_PATH} ${LUAJIT_ARGS} -n "Preprocessor.MacroExpansion"
-        "lua/Preprocessor/MacroExpansion.lua" "${BYTECODE_DIR}/Preprocessor/MacroExpansion.lua.h")
+        "lua/Preprocessor/MacroDefined.lua" "${BYTECODE_DIR}/Preprocessor/MacroDefined.lua.h")
 add_dependencies(${PROJECT_NAME}
     CompileLua)
 
