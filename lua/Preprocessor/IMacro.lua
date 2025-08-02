@@ -10,8 +10,9 @@ local pegParseMacro = lpeg.P{
     "first_macro",
     text        = (lpeg.P(1) - "$" - "\"" - "\'") ^ 0,
     literal     = PEG.StringLiteral + PEG.CharLiteral,
-    macro_name  = PEG.ID + PEG.Digit ^ 1,
-    macro       = "$" * lpeg.C(lpeg.V"macro_name") * lpeg.Ct((("(" * PEG.ExprList * ")") ^ -1)),
+    macro_name  = "$" * lpeg.C(PEG.ID + PEG.Digit ^ 1),
+    macro_args  = lpeg.Ct((("(" * PEG.ExprList * ")") ^ -1)),
+    macro       = lpeg.V"macro_name" * lpeg.V"macro_args",
     first_macro = lpeg.V"text" * (lpeg.V"literal" * lpeg.V"text") ^ 0 * PEG.Bounds(lpeg.V"macro")
 }
 
