@@ -20,7 +20,7 @@ end
 ---@param strMacroName  string
 ---@param objFileInfo   FileInfo
 ---@param tblMacros     MacroLookupTable
----@param tblParams string[]
+---@param tblParams     string[]
 ---@return string
 function MacroDefined:Expand(strMacroName, objFileInfo, tblMacros, tblParams)
     local tblParamNames =
