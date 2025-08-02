@@ -20,26 +20,15 @@ local pegParseMacro = lpeg.P{
 
 ---@diagnostic enable missing-fields
 
+local MacroExpansion = {}
+
 ---@alias MacroLookupTable table<string, IMacro>
 
----@class MacroExpansion : oop.object
----@field private objFileInfo       FileInfo
----@field private tblMacros         MacroLookupTable
----@field public  New               fun(objFileInfo: FileInfo, tblMacros: MacroLookupTable) : MacroExpansion
-local MacroExpansion = oop.newClass()
-
----@param objFileInfo FileInfo
----@param tblMacros MacroLookupTable
-function MacroExpansion:__init(objFileInfo, tblMacros)
-    self.objFileInfo =
-        objFileInfo
-    self.tblMacros =
-        tblMacros
-end
-
----@param strChunk string
+---@param strChunk      string
+---@param objFileInfo   FileInfo
+---@param tblMacros     MacroLookupTable
 ---@return string
-function MacroExpansion:ExpandMacros(strChunk)
+function MacroExpansion.ExpandAllMacros(strChunk, objFileInfo, tblMacros)
     while true do
         local nMacroBegin, strMacroName, tblMacroParams, nMacroEnd =
             pegParseMacro:match(strChunk)
@@ -50,18 +39,17 @@ function MacroExpansion:ExpandMacros(strChunk)
         if not strMacroName then
             return strChunk
         else
-            local objMacro  = log.assert(self.tblMacros[strMacroName],
+            local objMacro  = log.assert(tblMacros[strMacroName],
                                 "undefined macro: %s", strMacroName)
             log.assert(objMacro:IsDerivedFrom(IMacro),
                 "'%s' macro name is reserved and cannot be used")
 
             strChunk = ("%s%s%s"):format(
                 strChunk:sub(1, nMacroBegin - 1),
-                objMacro:Expand(strMacroName, self.objFileInfo, self.tblMacros, tblMacroParams),
+                objMacro:Expand(strMacroName, objFileInfo, tblMacros, tblMacroParams),
                 strChunk:sub(nMacroEnd))
         end
     end
 end
 
 return MacroExpansion
-
