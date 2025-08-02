@@ -75,7 +75,7 @@ local Preprocessor = oop.newClassFrom({
 function Preprocessor:MacroCurLine(strMacroName, objFileInfo, tblMacros, tblParams)
     local nParamCount   = #tblParams
     objFileInfo:Assert(nParamCount == 0,
-        "%s macro param mismatch -- expected 0, got %i",
+        "$%s: param mismatch -- expected 0, got %i",
         strMacroName, nParamCount)
 
     return tostring(objFileInfo:Line())
@@ -90,7 +90,7 @@ end
 function Preprocessor:MacroCurFilePath(strMacroName, objFileInfo, tblMacros, tblParams)
     local nParamCount   = #tblParams
     objFileInfo:Assert(nParamCount == 0,
-        "%s macro param mismatch -- expected 0, got %i",
+        "$%s: param mismatch -- expected 0, got %i",
         strMacroName, nParamCount)
 
     local strFilePath   = objFileInfo:Path()
@@ -107,7 +107,7 @@ end
 function Preprocessor:MacroCurFileName(strMacroName, objFileInfo, tblMacros, tblParams)
     local nParamCount   = #tblParams
     objFileInfo:Assert(nParamCount == 0,
-        "%s macro param mismatch -- expected %0, got %i",
+        "$%s: param mismatch -- expected %0, got %i",
         strMacroName, nParamCount)
 
     local strFilePath   = objFileInfo:Path()
@@ -127,7 +127,7 @@ end
 function Preprocessor:MacroCurFileDir(strMacroName, objFileInfo, tblMacros, tblParams)
     local nParamCount   = #tblParams
     objFileInfo:Assert(nParamCount == 0,
-        "%s macro param mismatch -- expected 0, got %i",
+        "$%s: param mismatch -- expected 0, got %i",
         strMacroName, nParamCount)
 
     local strFilePath   = objFileInfo:Path()
@@ -147,12 +147,12 @@ end
 function Preprocessor:MacroDefined(strMacroName, objFileInfo, tblMacros, tblParams)
     local nParamNameCount   = #tblParams
     objFileInfo:Assert(nParamNameCount == 1,
-        "%s macro param mismatch -- expected 1, got %i",
+        "$%s: param mismatch -- expected 1, got %i",
         strMacroName, nParamNameCount)
 
     local strParamMacroName  = tblParams[1]
     objFileInfo.Assert((PEG.ID * PEG.EOF):match(strParamMacroName),
-        "% macro invalid param -- expected an identifier, got %s",
+        "$%: invalid param -- expected an identifier, got %s",
         strMacroName, strParamMacroName)
 
     if tblMacros[strParamMacroName] then
@@ -169,13 +169,15 @@ end
 ---@param tblParams string[]
 ---@return string
 function Preprocessor:MacroStrFormat(strMacroName, objFileInfo, tblMacros, tblParams)
-    local nParamCount   = #tblParams
+    local nParamCount       = #tblParams
     objFileInfo:Assert(nParamCount >= 1,
-        "%s macro param mismatch -- expected at least 1, got %i",
+        "$%s: param mismatch -- expected at least 1, got %i",
         strMacroName, nParamCount)
     
-    local strFormat         = objFileInfo:Assert(PEG.StringLiteralContents:match(tblParams[1]),
-                                "%s macro invalid param -- first argument must be a string literal")
+    local strFormat         = IMacro.ExpandAllMacros(tblParams[1], objFileInfo, tblMacros)
+    objFileInfo:Assert(PEG.StringLiteralContents:match(strFormat),
+        "$%s: invalid first param -- expected a string literal, got %s",
+        strMacroName, strFormat)
     local tblFormatArgs     = setmetatable({}, tblMacros)
     tblFormatArgs.__index   = tblFormatArgs
     for i = 2, nParamCount do
@@ -197,13 +199,13 @@ end
 function Preprocessor:MacroStripString(strMacroName, objFileInfo, tblMacros, tblParams)
     local nParamCount   = #tblParams
     objFileInfo:Assert(nParamCount == 1,
-        "%s macro param mismatch -- expected 1, got %i",
+        "$%s: param mismatch -- expected 1, got %i",
         strMacroName, nParamCount)
     local strLiteral    = IMacro.ExpandAllMacros(
                             tblParams[1], objFileInfo, tblMacros)
     local strStriped    = PEG.StringLiteralContents:match(strLiteral)
     return objFileInfo:Assert(strStriped,
-        "%s macro invalid param -- expected a string literal, got %s",
+        "$%s: invalid param -- expected a string literal, got %s",
         strMacroName, strLiteral)
 end
 
@@ -216,16 +218,16 @@ end
 function Preprocessor:MacroStrEqual(strMacroName, objFileInfo, tblMacros, tblParams)
     local nParamCount   = #tblParams
     objFileInfo:Assert(nParamCount == 2,
-        "%s macro param mismatch -- expected 2, got %i",
+        "$%s: param mismatch -- expected 2, got %i",
         strMacroName, nParamCount)
     local strLHS        = IMacro.ExpandAllMacros(tblParams[1], objFileInfo, tblMacros)
     local strRHS        = IMacro.ExpandAllMacros(tblParams[2], objFileInfo, tblMacros)
 
     objFileInfo:Assert(PEG.StringLiteral:match(strLHS),
-        "%s macro invalid first param -- expected a string literal, got %s",
+        "$%s: invalid first param -- expected a string literal, got %s",
         strMacroName, strLHS)
     objFileInfo:Assert(PEG.StringLiteral:match(strRHS),
-        "%s macro invalid second param -- expected a string literal, got %s",
+        "$%s: invalid second param -- expected a string literal, got %s",
         strMacroName, strRHS)
 
     if strLHS == strRHS then
