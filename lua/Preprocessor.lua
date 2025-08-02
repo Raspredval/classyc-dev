@@ -156,9 +156,9 @@ function Preprocessor:MacroDefined(strMacroName, objFileInfo, tblMacros, tblPara
         strMacroName, strParamMacroName)
 
     if tblMacros[strParamMacroName] then
-        return "1"
+        return "true"
     else
-        return "0"
+        return "false"
     end
 end
 
