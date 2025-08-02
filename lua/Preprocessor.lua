@@ -167,6 +167,7 @@ end
 ---@param objFileInfo FileInfo
 ---@param tblMacros MacroLookupTable
 ---@param tblParams string[]
+---@return string
 function Preprocessor:MacroStrFormat(strMacroName, objFileInfo, tblMacros, tblParams)
     local nParamCount   = #tblParams
     objFileInfo:Assert(nParamCount >= 1,
@@ -192,6 +193,7 @@ end
 ---@param objFileInfo FileInfo
 ---@param tblMacros MacroLookupTable
 ---@param tblParams string[]
+---@return string
 function Preprocessor:MacroStripString(strMacroName, objFileInfo, tblMacros, tblParams)
     local nParamCount   = #tblParams
     objFileInfo:Assert(nParamCount == 1,
@@ -203,6 +205,30 @@ function Preprocessor:MacroStripString(strMacroName, objFileInfo, tblMacros, tbl
     return objFileInfo:Assert(strStriped,
         "%s macro invalid param -- expected a string literal, got %s",
         strMacroName, strLiteral)
+end
+
+---@private
+---@param strMacroName string
+---@param objFileInfo FileInfo
+---@param tblMacros MacroLookupTable
+---@param tblParams string[]
+---@return string
+function Preprocessor:MacroStrEqual(strMacroName, objFileInfo, tblMacros, tblParams)
+    local nParamCount   = #tblParams
+    objFileInfo:Assert(nParamCount == 2,
+        "%s macro param mismatch -- expected 2, got %i",
+        strMacroName, nParamCount)
+    local strLHS        = objFileInfo:Assert(PEG.StringLiteralContents:match(tblParams[1]),
+                            "%s macro invalid first param -- expected a string literal, got %s",
+                            strMacroName, tblParams[1])
+    local strRHS        = objFileInfo:Assert(PEG.StringLiteralContents:match(tblParams[1]),
+                            "%s macro invalid second param -- expected a string literal, got %s",
+                            strMacroName, tblParams[2])
+    if strLHS == strRHS then
+        return "true"
+    else
+        return "false"
+    end
 end
 
 function Preprocessor:__init()
@@ -234,6 +260,10 @@ function Preprocessor:__init()
         MacroBuiltin.New(self, Preprocessor.MacroStripString)
     self.tblMacrosGlobal["STR_STRIP"] = objMacroStripString
     self.tblMacrosGlobal["str_strip"] = objMacroStripString
+    local objMacroStrEqual =
+        MacroBuiltin.New(self, Preprocessor.MacroStrEqual)
+    self.tblMacrosGlobal["STR_EQUAL"] = objMacroStrEqual
+    self.tblMacrosGlobal["str_equal"] = objMacroStrEqual
 end
 
 ---@param strInputFile string
