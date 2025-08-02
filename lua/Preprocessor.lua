@@ -1,13 +1,13 @@
-local oop, lpeg, PEG, fs, log, FileInfo, MacroDefined, MacroBuiltin, MacroExpansion =
+local oop, lpeg, PEG, fs, log, FileInfo, IMacro, MacroDefined, MacroBuiltin =
     require "oop",
     require "lpeg",
     require "CommonPatterns",
     require "fs",
     require "log",
     require "FileInfo",
+    require "Preprocessor.IMacro",
     require "Preprocessor.MacroDefined",
-    require "Preprocessor.MacroBuiltin",
-    require "Preprocessor.MacroExpansion"
+    require "Preprocessor.MacroBuiltin"
 
 ---@type Pattern
 local pegParseCommandName   =
@@ -182,7 +182,7 @@ function Preprocessor:MacroStrFormat(strMacroName, objFileInfo, tblMacros, tblPa
             MacroDefined.New(tblParams[i])
     end
 
-    local strExpandedFormat = MacroExpansion.ExpandAllMacros(
+    local strExpandedFormat = IMacro.ExpandAllMacros(
                                 strFormat, objFileInfo, tblFormatArgs)
     return ("\"%s\""):format(strExpandedFormat:gsub("\"", "\\\""))
 end
@@ -197,7 +197,7 @@ function Preprocessor:MacroStripString(strMacroName, objFileInfo, tblMacros, tbl
     objFileInfo:Assert(nParamCount == 1,
         "%s macro param mismatch -- expected 1, got %i",
         strMacroName, nParamCount)
-    local strLiteral    = MacroExpansion.ExpandAllMacros(
+    local strLiteral    = IMacro.ExpandAllMacros(
                             tblParams[1], objFileInfo, tblMacros)
     local strStriped    = PEG.StringLiteralContents:match(strLiteral)
     return objFileInfo:Assert(strStriped,
@@ -316,7 +316,7 @@ function Preprocessor:RecursiveParsing(strInputFile)
             fnCommand(self, strCmdBody)
         else
             output:File():write(
-                MacroExpansion.ExpandAllMacros(
+                IMacro.ExpandAllMacros(
                     self:RemoveComments(strLine),
                     self:CurInputFile(),
                     self.tblMacrosGlobal),

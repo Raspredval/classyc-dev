@@ -1,8 +1,7 @@
-local oop, log, IMacro, MacroExpansion =
+local oop, log, IMacro =
     require "oop",
     require "log",
-    require "Preprocessor.IMacro",
-    require "Preprocessor.MacroExpansion"
+    require "Preprocessor.IMacro"
 
 ---@class MacroDefined : IMacro
 ---@field private strBody       string
@@ -46,10 +45,7 @@ function MacroDefined:Expand(strMacroName, objFileInfo, tblMacros, tblParams)
             MacroDefined.New(tblParams[i])
     end
 
-    local macro_expansion =
-        MacroExpansion.New(objFileInfo, tblMacrosLocal)
-
-    return macro_expansion:ExpandMacros(self.strBody)
+    return IMacro.ExpandAllMacros(self.strBody, objFileInfo, tblMacrosLocal)
 end
 
 return MacroDefined
