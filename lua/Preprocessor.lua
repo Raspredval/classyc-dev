@@ -182,9 +182,9 @@ function Preprocessor:MacroStrFormat(strMacroName, objFileInfo, tblMacros, tblPa
             MacroDefined.New(tblParams[i])
     end
 
-    local macro_expansion   = MacroExpansion.New(
-                                objFileInfo, tblFormatArgs)
-    return ("\"%s\""):format(macro_expansion:ExpandMacros(strFormat):gsub("\"", "\\\""))
+    local strExpandedFormat = MacroExpansion.ExpandAllMacros(
+                                strFormat, objFileInfo, tblFormatArgs)
+    return ("\"%s\""):format(strExpandedFormat:gsub("\"", "\\\""))
 end
 
 ---@private
@@ -197,8 +197,8 @@ function Preprocessor:MacroStripString(strMacroName, objFileInfo, tblMacros, tbl
     objFileInfo:Assert(nParamCount == 1,
         "%s macro param mismatch -- expected 1, got %i",
         strMacroName, nParamCount)
-    local macro_expansion = MacroExpansion.New(objFileInfo, tblMacros)
-    local strLiteral    = macro_expansion:ExpandMacros(tblParams[1])
+    local strLiteral    = MacroExpansion.ExpandAllMacros(
+                            tblParams[1], objFileInfo, tblMacros)
     local strStriped    = PEG.StringLiteralContents:match(strLiteral)
     return objFileInfo:Assert(strStriped,
         "%s macro invalid param -- expected a string literal, got %s",
@@ -315,12 +315,11 @@ function Preprocessor:RecursiveParsing(strInputFile)
                 pegParseCommandBody:match(strLine, nCmdNameEnd) or ""
             fnCommand(self, strCmdBody)
         else
-            local macro_expansion =
-                MacroExpansion.New(self:CurInputFile(), self.tblMacrosGlobal)
-
             output:File():write(
-                macro_expansion:ExpandMacros(
-                    self:RemoveComments(strLine)),
+                MacroExpansion.ExpandAllMacros(
+                    self:RemoveComments(strLine),
+                    self:CurInputFile(),
+                    self.tblMacrosGlobal),
                 "\n")
         end
 
