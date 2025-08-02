@@ -29,7 +29,7 @@ function MacroDefined:Expand(strMacroName, objFileInfo, tblMacros, tblParams)
         #tblParamNames, #tblParams
     
     objFileInfo:Assert(nParamNameCount == nParamValCount,
-        "%s macro param mismatch -- expected %i, got %i",
+        "$%s macro param mismatch -- expected %i, got %i",
         strMacroName, nParamNameCount, nParamValCount)
     
     ---@type MacroLookupTable
@@ -39,8 +39,8 @@ function MacroDefined:Expand(strMacroName, objFileInfo, tblMacros, tblParams)
 
     for i = 1, nParamNameCount do
         local strParamName = tblParamNames[i]
-        log.assert(not tblMacros[strParamName],
-            "macro parameter shadows existing macro: %s", strParamName)
+        objFileInfo:Assert(not tblMacros[strParamName],
+            "macro parameter $%s shadows existing macro", strParamName)
 
         tblMacrosLocal[strParamName] =
             MacroDefined.New(tblParams[i])
