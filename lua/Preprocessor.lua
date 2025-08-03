@@ -155,7 +155,7 @@ function Preprocessor:MacroDefined(strMacroName, objFileInfo, tblMacros, tblPara
         "$%: invalid param -- expected an identifier, got %s",
         strMacroName, strParamMacroName)
 
-    if tblMacros[strParamMacroName] then
+    if tblMacros[strParamMacroName] and oop.object.IsDerivedFrom(tblMacros[strParamMacroName], IMacro) then
         return "true"
     else
         return "false"
@@ -174,10 +174,9 @@ function Preprocessor:MacroStrFormat(strMacroName, objFileInfo, tblMacros, tblPa
         "$%s: param mismatch -- expected at least 1, got %i",
         strMacroName, nParamCount)
     
-    local strFormat         = IMacro.ExpandAllMacros(tblParams[1], objFileInfo, tblMacros)
-    local strFormatContents = objFileInfo:Assert(PEG.StringLiteralContents:match(strFormat),
+    local strFormatContents = objFileInfo:Assert(PEG.StringLiteralContents:match(tblParams[1]),
                                 "$%s: invalid first param -- expected a string literal, got %s",
-                                strMacroName, strFormat)
+                                strMacroName, tblParams[1])
     local tblFormatArgs     = setmetatable({}, tblMacros)
     tblFormatArgs.__index   = tblFormatArgs
     for i = 2, nParamCount do
@@ -201,12 +200,10 @@ function Preprocessor:MacroStripString(strMacroName, objFileInfo, tblMacros, tbl
     objFileInfo:Assert(nParamCount == 1,
         "$%s: param mismatch -- expected 1, got %i",
         strMacroName, nParamCount)
-    local strLiteral    = IMacro.ExpandAllMacros(
-                            tblParams[1], objFileInfo, tblMacros)
-    local strStriped    = PEG.StringLiteralContents:match(strLiteral)
+    local strStriped    = PEG.StringLiteralContents:match(tblParams[1])
     return objFileInfo:Assert(strStriped,
         "$%s: invalid param -- expected a string literal, got %s",
-        strMacroName, strLiteral)
+        strMacroName, tblParams[1])
 end
 
 ---@private
@@ -220,17 +217,15 @@ function Preprocessor:MacroStrEqual(strMacroName, objFileInfo, tblMacros, tblPar
     objFileInfo:Assert(nParamCount == 2,
         "$%s: param mismatch -- expected 2, got %i",
         strMacroName, nParamCount)
-    local strLHS        = IMacro.ExpandAllMacros(tblParams[1], objFileInfo, tblMacros)
-    local strRHS        = IMacro.ExpandAllMacros(tblParams[2], objFileInfo, tblMacros)
 
-    objFileInfo:Assert(PEG.StringLiteral:match(strLHS),
+    objFileInfo:Assert(PEG.StringLiteral:match(tblParams[1]),
         "$%s: invalid first param -- expected a string literal, got %s",
-        strMacroName, strLHS)
-    objFileInfo:Assert(PEG.StringLiteral:match(strRHS),
+        strMacroName, tblParams[1])
+    objFileInfo:Assert(PEG.StringLiteral:match(tblParams[2]),
         "$%s: invalid second param -- expected a string literal, got %s",
-        strMacroName, strRHS)
+        strMacroName, tblParams[2])
 
-    if strLHS == strRHS then
+    if tblParams[1] == tblParams[2] then
         return "true"
     else
         return "false"
@@ -374,7 +369,7 @@ function Preprocessor:RemoveComments(strLine)
         pegParseLineComment:match(strLine)
 
     log.assert(not PEG.IsStringEOF,
-        "missing closing quotes '\"'")
+        "missing a closing string literal quote (\")")
 
     if nCommentBegin then
         return strLine:sub(1, nCommentBegin - 1)
@@ -416,7 +411,7 @@ function Preprocessor:CmdUndef(strCmdBody)
     log.assert(strMacroName,
         "invalid macro name, must be a valid identifier")
 
-    log.assert(not oop.isRelatedTo(self.tblMacrosGlobal[strMacroName], MacroBuiltin),
+    log.assert(not oop.object.IsDerivedFrom(self.tblMacrosGlobal[strMacroName], MacroBuiltin),
         "undefining builtin macro", strMacroName)
     self.tblMacrosGlobal[strMacroName] = nil
 
