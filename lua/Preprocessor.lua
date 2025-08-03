@@ -151,7 +151,7 @@ function Preprocessor:MacroDefined(strMacroName, objFileInfo, tblMacros, tblPara
         strMacroName, nParamNameCount)
 
     local strParamMacroName  = tblParams[1]
-    objFileInfo.Assert((PEG.ID * PEG.EOF):match(strParamMacroName),
+    objFileInfo:Assert((PEG.ID * PEG.EOF):match(strParamMacroName),
         "$%: invalid param -- expected an identifier, got %s",
         strMacroName, strParamMacroName)
 
