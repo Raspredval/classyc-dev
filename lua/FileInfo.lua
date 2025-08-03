@@ -42,15 +42,25 @@ end
 ---@param strfmt string
 ---@param ... any
 function FileInfo:Print(strfmt, ...)
+    local strFilepath = self.strName
+    if #strFilepath > 30 then
+        strFilepath = ("...%s"):format(strFilepath:sub(#strFilepath - 30))
+    end
+
     log.print("[file: %s][line %i] " .. strfmt,
-        self.strName, self.nLine, ...)
+        strFilepath, self.nLine, ...)
 end
 
 ---@param strfmt string
 ---@param ... any
 function FileInfo:Error(strfmt, ...)
+    local strFilepath = self.strName
+    if #strFilepath > 30 then
+        strFilepath = ("...%s"):format(strFilepath:sub(#strFilepath - 30))
+    end
+    
     error(("[file: %s][line: %i] Error: " .. strfmt):
-        format(self.strName, self.nLine, ...), 0)
+        format(strFilepath, self.nLine, ...), 0)
 end
 
 ---@generic T
@@ -59,9 +69,14 @@ end
 ---@param ... any
 ---@return T
 function FileInfo:Assert(v, strfmt, ...)
+    local strFilepath = self.strName
+    if #strFilepath > 30 then
+        strFilepath = ("...%s"):format(strFilepath:sub(#strFilepath - 30))
+    end
+    
     if not v then
         error(("[file: %s][line: %i] Error: " .. strfmt):
-            format(self.strName, self.nLine, ...), 0)
+            format(strFilepath, self.nLine, ...), 0)
     end
 
     return v
