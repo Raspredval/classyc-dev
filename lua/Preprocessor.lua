@@ -280,6 +280,37 @@ function Preprocessor:MacroStrSize(strMacroName, objFileInfo, tblMacros, tblPara
     return tostring(#strInput)
 end
 
+---@private
+---@param strMacroName string
+---@param objFileInfo FileInfo
+---@param tblMacros MacroLookupTable
+---@param tblParams string[]
+---@return string
+function Preprocessor:MacroStrFind(strMacroName, objFileInfo, tblMacros, tblParams)
+    local nParamCount   = #tblParams
+    objFileInfo:Assert(nParamCount == 2,
+        "$%s: param mismatch -- expected 2, got %i",
+        strMacroName, nParamCount)
+    
+    local strWhere  = PEG.StringLiteralContents:match(tblParams[1])
+    local strWhat   = PEG.StringLiteralContents:match(tblParams[2])
+
+    objFileInfo:Assert(strWhere,
+        "$%s: invalid first param -- expected string literal, got %s",
+        strMacroName, tblParams[1])
+    objFileInfo:Assert(strWhat,
+        "$%s: invalid second param -- expected string literal, got %s",
+        strMacroName, tblParams[2])
+
+    local nMatchBegin, nMatchEnd =
+        string.find(strWhere, strWhat)
+    if nMatchBegin and nMatchEnd then
+        return tostring(nMatchBegin)
+    else
+        return "false"
+    end
+end
+
 function Preprocessor:__init()
     self.tblMacrosGlobal    = {}
     self.tblInputFiles      = {}
@@ -321,6 +352,10 @@ function Preprocessor:__init()
         MacroBuiltin.New(self, Preprocessor.MacroStrSize)
     self.tblMacrosGlobal["STR_SIZE"] = objMacroStrSize
     self.tblMacrosGlobal["str_size"] = objMacroStrSize
+    local objMacroStrFind =
+        MacroBuiltin.New(self, Preprocessor.MacroStrFind)
+    self.tblMacrosGlobal["STR_FIND"] = objMacroStrFind
+    self.tblMacrosGlobal["str_find"] = objMacroStrFind
 end
 
 ---@param strInputFile string
