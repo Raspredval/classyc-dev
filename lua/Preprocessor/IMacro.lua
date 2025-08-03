@@ -48,7 +48,7 @@ function IMacro.ExpandAllMacros(strChunk, objFileInfo, tblMacros)
             return strChunk
         else
             local objMacro  = tblMacros[strMacroName]
-            objFileInfo:Assert(objMacro and objMacro:IsDerivedFrom(IMacro),
+            objFileInfo:Assert(objMacro and oop.object.IsDerivedFrom(objMacro, IMacro),
                 "undefined macro: %s", strMacroName)
             
             for i = 1, #tblMacroParams do
