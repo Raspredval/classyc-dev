@@ -232,6 +232,34 @@ function Preprocessor:MacroStrEqual(strMacroName, objFileInfo, tblMacros, tblPar
     end
 end
 
+---@private
+---@param strMacroName string
+---@param objFileInfo FileInfo
+---@param tblMacros MacroLookupTable
+---@param tblParams string[]
+---@return string
+function Preprocessor:MacroStrReplace(strMacroName, objFileInfo, tblMacros, tblParams)
+    local nParamCount   = #tblParams
+    objFileInfo:Assert(nParamCount == 3,
+        "$%s: param mismatch -- expected 3, got %i",
+        strMacroName, nParamCount)
+    local strWhere  = PEG.StringLiteralContents:match(tblParams[1])
+    local strWhat   = PEG.StringLiteralContents:match(tblParams[2])
+    local strWith   = PEG.StringLiteralContents:match(tblParams[3])
+
+    objFileInfo:Assert(strWhere,
+        "$%s: invalid first param -- expected a string literal, got %s",
+        strMacroName, tblParams[1])
+    objFileInfo:Assert(strWhat,
+        "$%s: invalid second param -- expected a string literal, got %s",
+        strMacroName, tblParams[2])
+    objFileInfo:Assert(strWith,
+        "$%s: invalid third param -- expected a string literal, got %s",
+        strMacroName, tblParams[3])
+
+    return ("\"%s\""):format(string.gsub(strWhere, strWhat, strWith))
+end
+
 function Preprocessor:__init()
     self.tblMacrosGlobal    = {}
     self.tblInputFiles      = {}
@@ -265,6 +293,10 @@ function Preprocessor:__init()
         MacroBuiltin.New(self, Preprocessor.MacroStrEqual)
     self.tblMacrosGlobal["STR_EQUAL"] = objMacroStrEqual
     self.tblMacrosGlobal["str_equal"] = objMacroStrEqual
+    local objMacroStrReplace =
+        MacroBuiltin.New(self, Preprocessor.MacroStrReplace)
+    self.tblMacrosGlobal["STR_REPLACE"] = objMacroStrReplace
+    self.tblMacrosGlobal["str_replace"] = objMacroStrReplace
 end
 
 ---@param strInputFile string
