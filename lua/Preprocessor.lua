@@ -286,10 +286,10 @@ end
 ---@param tblMacros MacroLookupTable
 ---@param tblParams string[]
 ---@return string
-function Preprocessor:MacroStrFind(strMacroName, objFileInfo, tblMacros, tblParams)
+function Preprocessor:MacroStrSub(strMacroName, objFileInfo, tblMacros, tblParams)
     local nParamCount   = #tblParams
-    objFileInfo:Assert(nParamCount == 2,
-        "$%s: param mismatch -- expected 2, got %i",
+    objFileInfo:Assert(nParamCount == 2 or nParamCount == 3,
+        "$%s: param mismatch -- expected 2 or 3, got %i",
         strMacroName, nParamCount)
     
     local strWhere  = PEG.StringLiteralContents:match(tblParams[1])
@@ -302,10 +302,20 @@ function Preprocessor:MacroStrFind(strMacroName, objFileInfo, tblMacros, tblPara
         "$%s: invalid second param -- expected string literal, got %s",
         strMacroName, tblParams[2])
 
+    local nCount = nil
+    if nParamCount == 3 then
+        local strCount  = lpeg.C(PEG.Digit ^ 1):match(tblParams[3])
+        objFileInfo:Assert(strCount,
+            "$%s: invalid third param -- expected number, got %s",
+            strMacroName, tblParams[3])
+        nCount = log.assert(tonumber(strCount),
+                    "failed to convert string into number")
+    end
+
     local nMatchBegin, nMatchEnd =
-        string.find(strWhere, strWhat)
+        string.find(strWhere, strWhat, nCount)
     if nMatchBegin and nMatchEnd then
-        return tostring(nMatchBegin)
+        return ("\"%s\""):format(string.sub(strWhere, nMatchBegin, nMatchEnd))
     else
         return "false"
     end
@@ -352,10 +362,10 @@ function Preprocessor:__init()
         MacroBuiltin.New(self, Preprocessor.MacroStrSize)
     self.tblMacrosGlobal["STR_SIZE"] = objMacroStrSize
     self.tblMacrosGlobal["str_size"] = objMacroStrSize
-    local objMacroStrFind =
-        MacroBuiltin.New(self, Preprocessor.MacroStrFind)
-    self.tblMacrosGlobal["STR_FIND"] = objMacroStrFind
-    self.tblMacrosGlobal["str_find"] = objMacroStrFind
+    local objMacroStrSub =
+        MacroBuiltin.New(self, Preprocessor.MacroStrSub)
+    self.tblMacrosGlobal["STR_SUB"] = objMacroStrSub
+    self.tblMacrosGlobal["str_sub"] = objMacroStrSub
 end
 
 ---@param strInputFile string
