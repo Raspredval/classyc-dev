@@ -260,6 +260,26 @@ function Preprocessor:MacroStrReplace(strMacroName, objFileInfo, tblMacros, tblP
     return ("\"%s\""):format(string.gsub(strWhere, strWhat, strWith))
 end
 
+---@private
+---@param strMacroName string
+---@param objFileInfo FileInfo
+---@param tblMacros MacroLookupTable
+---@param tblParams string[]
+---@return string
+function Preprocessor:MacroStrSize(strMacroName, objFileInfo, tblMacros, tblParams)
+    local nParamCount   = #tblParams
+    objFileInfo:Assert(nParamCount == 1,
+        "$%s: param mismatch -- expected 1, got %i",
+        strMacroName, nParamCount)
+
+    local strInput  = PEG.StringLiteralContents:match(tblParams[1])
+    objFileInfo:Assert(strInput,
+        "$%s: invalid param -- expected string literal, got %s",
+        strMacroName, nParamCount)
+
+    return tostring(#strInput)
+end
+
 function Preprocessor:__init()
     self.tblMacrosGlobal    = {}
     self.tblInputFiles      = {}
@@ -297,6 +317,10 @@ function Preprocessor:__init()
         MacroBuiltin.New(self, Preprocessor.MacroStrReplace)
     self.tblMacrosGlobal["STR_REPLACE"] = objMacroStrReplace
     self.tblMacrosGlobal["str_replace"] = objMacroStrReplace
+    local objMacroStrSize =
+        MacroBuiltin.New(self, Preprocessor.MacroStrSize)
+    self.tblMacrosGlobal["STR_SIZE"] = objMacroStrSize
+    self.tblMacrosGlobal["str_size"] = objMacroStrSize
 end
 
 ---@param strInputFile string
