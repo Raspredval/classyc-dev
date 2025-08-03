@@ -50,6 +50,12 @@ function IMacro.ExpandAllMacros(strChunk, objFileInfo, tblMacros)
             local objMacro  = tblMacros[strMacroName]
             objFileInfo:Assert(objMacro and objMacro:IsDerivedFrom(IMacro),
                 "undefined macro: %s", strMacroName)
+            
+            for i = 1, #tblMacroParams do
+                tblMacroParams[i] =
+                    IMacro.ExpandAllMacros(
+                        tblMacroParams[i], objFileInfo, tblMacros)
+            end
 
             strChunk = ("%s%s%s"):format(
                 strChunk:sub(1, nMacroBegin - 1),
