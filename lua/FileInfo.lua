@@ -31,6 +31,10 @@ function FileInfo:Line()
     return self.nLine
 end
 
+function FileInfo:DecrLine()
+    self.nLine = self.nLine - 1
+end
+
 function FileInfo:IncrLine()
     self.nLine = self.nLine + 1
 end
@@ -39,28 +43,34 @@ function FileInfo:File()
     return self.fFile
 end
 
+---@alias LoggingFunction fun(strfmt: string, ...)
+
+---@private
+---@param fnLogging LoggingFunction
 ---@param strfmt string
 ---@param ... any
-function FileInfo:Print(strfmt, ...)
+function FileInfo:loggingInsertCurParsePos(fnLogging, strfmt, ...)
     local strFilepath = self.strName
     if #strFilepath > 30 then
         strFilepath = ("...%s"):format(strFilepath:sub(#strFilepath - 30))
     end
 
-    log.print("[file: %s][line %i] " .. strfmt,
+    fnLogging("[file: %s][line %i] " .. strfmt,
         strFilepath, self.nLine, ...)
 end
 
 ---@param strfmt string
 ---@param ... any
+function FileInfo:Print(strfmt, ...)
+    self:loggingInsertCurParsePos(
+        log.print, strfmt, ...)
+end
+
+---@param strfmt string
+---@param ... any
 function FileInfo:Error(strfmt, ...)
-    local strFilepath = self.strName
-    if #strFilepath > 30 then
-        strFilepath = ("...%s"):format(strFilepath:sub(#strFilepath - 30))
-    end
-    
-    log.error("[file: %s][line: %i] Error: " .. strfmt,
-        strFilepath, self.nLine, ...)
+    self:loggingInsertCurParsePos(
+        log.error, strfmt, ...)
 end
 
 ---@generic T
@@ -69,14 +79,9 @@ end
 ---@param ... any
 ---@return T
 function FileInfo:Assert(v, strfmt, ...)
-    local strFilepath = self.strName
-    if #strFilepath > 30 then
-        strFilepath = ("...%s"):format(strFilepath:sub(#strFilepath - 30))
-    end
-    
     if not v then
-        log.error("[file: %s][line: %i] Error: " .. strfmt,
-            strFilepath, self.nLine, ...)
+        self:loggingInsertCurParsePos(
+            log.error, strfmt, ...)
     end
 
     return v
