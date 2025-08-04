@@ -59,8 +59,8 @@ function FileInfo:Error(strfmt, ...)
         strFilepath = ("...%s"):format(strFilepath:sub(#strFilepath - 30))
     end
     
-    error(("[file: %s][line: %i] Error: " .. strfmt):
-        format(strFilepath, self.nLine, ...), 0)
+    log.error("[file: %s][line: %i] Error: " .. strfmt,
+        strFilepath, self.nLine, ...)
 end
 
 ---@generic T
@@ -75,8 +75,8 @@ function FileInfo:Assert(v, strfmt, ...)
     end
     
     if not v then
-        error(("[file: %s][line: %i] Error: " .. strfmt):
-            format(strFilepath, self.nLine, ...), 0)
+        log.error("[file: %s][line: %i] Error: " .. strfmt,
+            strFilepath, self.nLine, ...)
     end
 
     return v
