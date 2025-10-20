@@ -101,7 +101,7 @@ namespace io {
             template<typename... Args>
             const auto&
             fmt(this const auto& self, const std::format_string<Args...>& strfmt, Args&&... args) {
-                return self.Str(
+                return self.puts(
                     std::format(
                         strfmt, std::forward<Args>(args)...));
             }
@@ -143,28 +143,14 @@ namespace io {
             const auto&
             getc(this const auto& self, char& out) {
                 std::optional<std::byte>
-                    optc = self.Stream().Read();
+                    optc = self.stream().Read();
                 if (optc)
                     out = (char)*optc;
                 return self;
             }
 
             const auto&
-            getln(this const auto& self, std::string& out) {
-                std::string
-                    strLine;
-                std::optional<std::byte>
-                    optc;
-                while ((bool)(optc = self.Stream().Read()) && (char)*optc != '\n') {
-                    strLine += (char)*optc;
-                }
-
-                out = std::move(strLine);
-                return self;
-            }
-
-            const auto&
-            get(this const auto& self, std::string& out) {
+            gets(this const auto& self, std::string& out) {
                 std::string
                     strAll;
                 std::optional<std::byte>
@@ -174,6 +160,20 @@ namespace io {
                 }
 
                 out = std::move(strAll);
+                return self;
+            }
+
+            const auto&
+            getln(this const auto& self, std::string& out) {
+                std::string
+                    strLine;
+                std::optional<std::byte>
+                    optc;
+                while ((bool)(optc = self.stream().Read()) && (char)*optc != '\n') {
+                    strLine += (char)*optc;
+                }
+
+                out = std::move(strLine);
                 return self;
             }
 
