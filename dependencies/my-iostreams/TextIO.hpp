@@ -108,7 +108,7 @@ namespace io {
                                 lpcBuffer, sizeof(lpcBuffer),
                                 strfmt, std::forward<Args>(args)...);
 
-                return self.puts(std::string_view(lpcBuffer, result.size));
+                return self.puts(std::string_view(lpcBuffer, (size_t)result.size));
             }
 
             template<typename V> requires
