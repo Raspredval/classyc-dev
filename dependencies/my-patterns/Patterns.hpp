@@ -103,6 +103,7 @@ namespace patt {
             virtual patt::Pattern
             Clone() const = 0;
 
+            // pattern inversion
             [[nodiscard]]
             friend patt::Pattern
             operator-(patt::Pattern&& pattern) {
@@ -136,6 +137,7 @@ namespace patt {
                 bNegated = false;
         };
 
+        // pattern inversion
         [[nodiscard]]
         inline patt::Pattern
         operator-(const patt::Pattern& pattern) {
@@ -204,6 +206,7 @@ namespace patt {
                 arrPatterns;
         };
 
+        // lhs followed by rhs
         [[nodiscard]] inline patt::Pattern
         operator>>(const patt::Pattern& lhs, const patt::Pattern& rhs) {
             return std::make_shared<ConcatPattern>(lhs, rhs);
@@ -272,6 +275,7 @@ namespace patt {
                 arrPatterns;
         };
 
+        // ordered choice
         [[nodiscard]] inline patt::Pattern
         operator|=(const patt::Pattern& lhs, const patt::Pattern& rhs) {
             return std::make_shared<ChoicePattern>(lhs, rhs);
@@ -320,6 +324,7 @@ namespace patt {
                 fnCallback;
         };
 
+        // wrap pattern in "on pattern evaluation" event handler
         template<typename Fn> requires
             std::is_constructible_v<HandlerPattern::Callback, Fn>
         [[nodiscard]]
@@ -428,6 +433,9 @@ namespace patt {
                 uCount;
         };
 
+        // repeat pattern:
+        //  if rhs is positive, repeat N+ times;
+        //  if rhs is negative, repeat 0..N times.
         [[nodiscard]]
         inline patt::Pattern
         operator%(const patt::Pattern& lhs, intptr_t rhs) {
@@ -469,6 +477,7 @@ namespace patt {
                 uCount;
         };
 
+        // repeat pattern exactly N times
         [[nodiscard]]
         inline patt::Pattern
         operator*(const patt::Pattern& lhs, size_t rhs) {
@@ -616,6 +625,12 @@ namespace patt {
     inline Pattern
     None() {
         return -Any();
+    }
+
+    [[nodiscard]]
+    inline Pattern
+    Endl() {
+        return patt::Str("\n") |= patt::Str("\r\n") |= patt::None();
     }
 
     [[nodiscard]]
