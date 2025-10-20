@@ -9,9 +9,9 @@ namespace io {
         std_output(stdout),
         std_error(stderr);
 
-    static TextReader
+    static TextInput
         cin(std_input);
-    static TextWriter
+    static TextOutput
         cout(std_output),
         cerr(std_error);
 }
