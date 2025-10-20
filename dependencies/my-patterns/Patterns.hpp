@@ -22,32 +22,28 @@ namespace patt {
     class Match {
     public:
         Match() :
-            iBegin(0), iEnd(0) {};
+            iBegin(0), iEnd(0) {}
 
-        Match(intptr_t iBeginPos, intptr_t iEndPos) :
-            iBegin(iBeginPos), iEnd(iEndPos)
-        {
-            if (iBeginPos > iEndPos)
-                throw io::Error("invalid stream position range");
-        }
+        Match(intptr_t iBegin, intptr_t iEnd) :
+            iBegin(iBegin), iEnd(iEnd) {}
 
-        inline intptr_t
+        intptr_t
         Begin() const noexcept {
             return this->iBegin;
         }
 
-        inline intptr_t
+        intptr_t
         End() const noexcept {
             return this->iEnd;
         }
 
-        inline size_t
+        size_t
         Length() const noexcept {
             return (size_t)(this->iEnd - this->iBegin);
         }
 
-        inline std::string
-        GetString(io::IStream& is) const noexcept {
+        std::string
+        GetString(io::IStream& is) const {
             intptr_t
                 iCurrentPos = is.GetPosition();
             is.SetPosition(this->iBegin);
@@ -55,6 +51,7 @@ namespace patt {
             std::string
                 strMatch    = {};
             strMatch.resize(this->Length());
+            
             is.ReadSome({
                 (std::byte*)strMatch.data(),
                 strMatch.size()
@@ -64,13 +61,12 @@ namespace patt {
             return strMatch;
         }
 
-        inline friend bool
-        operator==(const Match& lhs, const Match& rhs) noexcept {
-            return lhs.iBegin == rhs.iBegin && lhs.iEnd == rhs.iEnd;
+        auto&
+        Concat(const Match& match) noexcept {
+            this->iEnd  =
+                match.iEnd;
+            return *this;
         }
-
-        inline friend bool
-        operator!=(const Match& lhs, const Match& rhs) noexcept = default;
 
         class Error :
             public io::Error {
@@ -93,10 +89,9 @@ namespace patt {
 
             Match
             Eval(io::IStream& is) const {
-                if (this->bNegated)
-                    return this->negEval(is);
-                else
-                    return this->normEval(is);
+                return (this->bNegated)
+                    ? this->negEval(is)
+                    : this->normEval(is);
             };
 
             [[nodiscard]]
@@ -134,7 +129,7 @@ namespace patt {
             }
 
             bool
-                bNegated = false;
+                bNegated    = false;
         };
 
         // pattern inversion
@@ -181,29 +176,23 @@ namespace patt {
             public __impl::Pattern {
         public:
             ConcatPattern(const patt::Pattern& lhs, const patt::Pattern& rhs) :
-                arrPatterns{lhs, rhs} {}
+                lhs(lhs), rhs(rhs) {}
 
             [[nodiscard]]
             patt::Pattern
             Clone() const override {
                 return std::make_shared<ConcatPattern>(*this);
             }
+        
         private:
             Match
             normEval(io::IStream& is) const override {
-                intptr_t
-                    iBegin  = is.GetPosition();
-                
-                for (const patt::Pattern& p : this->arrPatterns)
-                    p->Eval(is);
-
-                intptr_t
-                    iEnd    = is.GetPosition();
-                return Match{ iBegin, iEnd };
+                return this->lhs->Eval(is).Concat(
+                    this->rhs->Eval(is));
             }
 
-            std::array<patt::Pattern, 2>
-                arrPatterns;
+            patt::Pattern
+                lhs, rhs;
         };
 
         // lhs followed by rhs
@@ -222,6 +211,7 @@ namespace patt {
             Clone() const override {
                 return std::make_shared<AnyPattern>(*this);
             }
+        
         private:
             Match
             normEval(io::IStream& is) const override {
@@ -457,6 +447,7 @@ namespace patt {
             Clone() const override {
                 return std::make_shared<RepeatExactPattern>(*this);
             }
+        
         private:
             Match
             normEval(io::IStream& is) const override {
@@ -605,6 +596,49 @@ namespace patt {
         inline Grammar::ConstAccessor::operator patt::Pattern() && {
             return std::make_shared<GrammarPattern>(
                 this->sptrPatterns, std::move(this->strKey));
+        }
+
+        template<typename T, typename V>
+        concept Appendable =
+            requires (T& obj, std::decay_t<V>&& rvalue, std::decay_t<V> const& lvalue) {
+                { obj.push_back(lvalue) };
+                { obj.push_back(std::move(rvalue)) };
+            };
+        
+        template<Appendable<std::string> T>
+        class CapturePattern :
+            public Pattern {
+        public:
+            CapturePattern(const patt::Pattern& pattern, const std::shared_ptr<T>& sptrCaptures) :
+                pattern(pattern),
+                sptrCaptures(sptrCaptures) {}
+        
+            patt::Pattern
+            Clone() const override {
+                return std::make_shared<CapturePattern<T>>(*this);
+            }
+
+        private:
+            Match
+            normEval(io::IStream& is) const override {
+                Match
+                    m   = this->pattern->Eval(is);
+                this->sptrCaptures->push_back(
+                    m.GetString(is));
+                return m;
+            }
+
+            patt::Pattern
+                pattern;
+            std::shared_ptr<T>
+                sptrCaptures;
+        };
+
+        template<Appendable<std::string> T>
+        [[nodiscard]]
+        inline patt::Pattern
+        operator>>(const patt::Pattern& pattern, const std::shared_ptr<T>& sptrCaptures) {
+            return std::make_shared<CapturePattern<T>>(pattern, sptrCaptures);
         }
     }
 
