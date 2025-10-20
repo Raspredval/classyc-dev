@@ -101,9 +101,14 @@ namespace io {
             template<typename... Args>
             const auto&
             fmt(this const auto& self, const std::format_string<Args...>& strfmt, Args&&... args) {
-                return self.puts(
-                    std::format(
-                        strfmt, std::forward<Args>(args)...));
+                static char
+                    lpcBuffer[256];
+                auto
+                    result  = std::format_to_n(
+                                lpcBuffer, sizeof(lpcBuffer),
+                                strfmt, std::forward<Args>(args)...);
+
+                return self.puts(std::string_view(lpcBuffer, result.size));
             }
 
             template<typename V> requires
