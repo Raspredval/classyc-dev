@@ -600,18 +600,20 @@ namespace patt {
 
         template<typename T, typename V>
         concept Appendable =
-            requires (T& obj, std::decay_t<V>&& rvalue, std::decay_t<V> const& lvalue) {
-                { obj.push_back(lvalue) };
-                { obj.push_back(std::move(rvalue)) };
+            requires (T& obj, std::decay_t<V> const& copy_ref) {
+                { obj.push_back(copy_ref) };
+            } ||
+            requires (T& obj, std::decay_t<V>&& move_ref) {
+                { obj.push_back(std::move(move_ref)) };
             };
         
         template<Appendable<std::string> T>
         class CapturePattern :
             public Pattern {
         public:
-            CapturePattern(const patt::Pattern& pattern, const std::shared_ptr<T>& sptrCaptures) :
+            CapturePattern(const patt::Pattern& pattern, T& refCaptures) :
                 pattern(pattern),
-                sptrCaptures(sptrCaptures) {}
+                refCaptures(refCaptures) {}
         
             patt::Pattern
             Clone() const override {
@@ -623,22 +625,22 @@ namespace patt {
             normEval(io::IStream& is) const override {
                 Match
                     m   = this->pattern->Eval(is);
-                this->sptrCaptures->push_back(
+                this->refCaptures.push_back(
                     m.GetString(is));
                 return m;
             }
 
             patt::Pattern
                 pattern;
-            std::shared_ptr<T>
-                sptrCaptures;
+            T&
+                refCaptures;
         };
 
         template<Appendable<std::string> T>
         [[nodiscard]]
         inline patt::Pattern
-        operator>>(const patt::Pattern& pattern, const std::shared_ptr<T>& sptrCaptures) {
-            return std::make_shared<CapturePattern<T>>(pattern, sptrCaptures);
+        operator>>(const patt::Pattern& pattern, T& refCaptures) {
+            return std::make_shared<CapturePattern<T>>(pattern, refCaptures);
         }
     }
 
