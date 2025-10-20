@@ -10,7 +10,8 @@ add_executable(classyc
 
 target_include_directories(classyc
     PRIVATE
-        "include/")
+        "include/"
+        "dependencies/")
 target_compile_options(classyc
     PRIVATE
         "-Wall" "-Wextra" "-Wconversion" "-Werror")
