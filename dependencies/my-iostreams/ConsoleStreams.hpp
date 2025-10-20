@@ -1,6 +1,6 @@
 #pragma once
-#include <FileViewStreams.hpp>
-#include <TextIO.hpp>
+#include "FileViewStreams.hpp"
+#include "TextIO.hpp"
 
 namespace io {
     static IFileViewStream

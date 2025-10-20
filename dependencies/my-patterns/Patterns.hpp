@@ -5,8 +5,8 @@
 #include <string>
 #include <functional>
 
-#include "IOStreams.hpp"
-#include "Logging.hpp"
+#include <my-iostreams/IOStreams.hpp>
+#include <my-iostreams/Logging.hpp>
 
 namespace patt {
     namespace __impl {
