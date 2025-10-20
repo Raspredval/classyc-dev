@@ -639,7 +639,7 @@ namespace patt {
         template<Appendable<std::string> T>
         [[nodiscard]]
         inline patt::Pattern
-        operator>>(const patt::Pattern& pattern, T& refCaptures) {
+        operator/(const patt::Pattern& pattern, T& refCaptures) {
             return std::make_shared<CapturePattern<T>>(pattern, refCaptures);
         }
     }
