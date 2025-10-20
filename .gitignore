@@ -4,6 +4,4 @@
 .vscode/*
 build
 build/*
-include/IOStreams
-include/IOStreams/*
 compile_commands.json
