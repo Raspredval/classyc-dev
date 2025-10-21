@@ -4,7 +4,7 @@
 int
 main(int argc, const char* argv[]) {
     if (argc != 2) {
-        io::cerr.fmt("invalid arg count, expected 1, got {}", argc - 1);
+        io::cerr.fmt("invalid arg count, expected 1, got {}\n", argc - 1);
         return EXIT_FAILURE;
     }
 
