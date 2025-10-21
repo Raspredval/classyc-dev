@@ -27,6 +27,11 @@ target_compile_options(classyc-tests
     PRIVATE
         "-Wall" "-Wextra" "-Wconversion" "-Werror")
 
+include(CTest)
+
 add_test(
-    NAME    classyc-tests
-    COMMAND classyc-tests)
+    NAME    classyc-test-patterns
+    COMMAND classyc-tests "--patterns")
+add_test(
+    NAME    classyc-test-text-io
+    COMMAND classyc-tests "--text-io")
