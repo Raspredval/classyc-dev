@@ -2,5 +2,5 @@
 
 int
 main() {
-    io::cout.puts("Hello, world!\n");
+    io::cout.put_str("Hello, world!\n");
 }
