@@ -17,10 +17,10 @@ inline int
 TestPatterns() {
     std::map<std::string, std::string>
         mapMacros;
-    size_t
-        uLineCount      = 1;
     MacroArgs
         args;
+    size_t
+        uLineCount      = 1;
     
     auto
         fnHandleDefine  =
@@ -40,7 +40,7 @@ TestPatterns() {
             };
 
     patt::Pattern
-        ptEndl          = patt::Str("\n") |= patt::None(),
+        ptEndl          = patt::Str("\n") |= patt::Str("\r\n") |= patt::None(),
         ptSpacing       = patt::Space() % 1,
         ptIdentifier    =
             (patt::Alpha() |= patt::Str("_")) >>
@@ -68,7 +68,7 @@ TestPatterns() {
     }
 
     for (const auto& [strKey, strValue] : mapMacros) {
-        io::cout.fmt("{}:\t{}\n", strKey, strValue);
+        io::cout.fmt("[{}]:\t\"{}\"\n", strKey, strValue);
     }
 
     return EXIT_SUCCESS;
