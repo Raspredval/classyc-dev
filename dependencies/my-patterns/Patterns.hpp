@@ -6,7 +6,6 @@
 #include <functional>
 
 #include <my-iostreams/IOStreams.hpp>
-#include <my-iostreams/Logging.hpp>
 
 namespace patt {
     namespace __impl {
