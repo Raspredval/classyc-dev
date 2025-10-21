@@ -4,4 +4,6 @@
 .vscode/*
 build
 build/*
+assets
+assets/*
 compile_commands.json
