@@ -304,7 +304,7 @@ namespace patt {
                 fnCallback;
         };
 
-        // wrap pattern in "on pattern evaluation" event handler
+        // wrap pattern with "on pattern evaluation" event handler
         template<typename Fn> requires
             std::is_constructible_v<HandlerPattern::Callback, Fn>
         [[nodiscard]]
