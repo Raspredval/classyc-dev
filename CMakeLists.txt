@@ -21,6 +21,7 @@ add_executable(classyc-tests
 target_include_directories(classyc-tests
     PRIVATE
         "include/"
+        "tests/include"
         "dependencies/")
 target_compile_options(classyc-tests
     PRIVATE
