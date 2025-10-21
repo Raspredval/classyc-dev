@@ -38,7 +38,7 @@ namespace io {
                     std::begin(lpcTemp),
                     std::end(lpcTemp),
                     val, base);
-                return self.put_string(lpcTemp);
+                return self.put_str(lpcTemp);
             }
 
             template<std::integral I>
@@ -115,15 +115,17 @@ namespace io {
                 std::integral<V> ||
                 std::floating_point<V>
             const auto&
-            put_any(this const auto& self, const V& val) {
+            put(this const auto& self, const V& val) {
                 if constexpr (std::same_as<V, char>)
                     return self.put_char(val);
-                else if (std::is_constructible_v<std::string_view, V>)
+                else if constexpr (std::constructible_from<std::string_view, V>)
                     return self.put_str({val});
-                else if (std::is_integral_v<V>)
+                else if constexpr (std::integral<V>)
                     return self.put_int(val);
-                else if constexpr (std::is_floating_point_v<V>)
+                else if constexpr (std::floating_point<V>)
                     return self.put_float(val);
+                else
+                    return self;
             }
 
             const auto&
@@ -153,7 +155,30 @@ namespace io {
             }
 
             const auto&
-            get_str(this const auto& self, std::string& out) {
+            get_word(this const auto& self, std::string& out) {
+                std::optional<std::byte>
+                    optc;
+                while ((bool)(optc = self.stream().Read())) {
+                    if (!isspace((int)*optc)) {
+                        self.stream().PutBack(*optc);
+                        break;
+                    }
+                }
+                while ((bool)(optc = self.stream().Read())) {
+                    if (!isspace((int)*optc)) {
+                        out.push_back((char)*optc);
+                    }
+                    else {
+                        self.stream().PutBack(*optc);
+                        break;
+                    }
+                }
+
+                return self;
+            }
+
+            const auto&
+            get_all(this const auto& self, std::string& out) {
                 std::string
                     strAll;
                 std::optional<std::byte>
@@ -237,6 +262,23 @@ namespace io {
                 default:
                     return self;
                 }
+            }
+
+            template<typename V> requires
+                std::same_as<char, V> ||
+                std::constructible_from<std::string_view, V> ||
+                std::integral<V> ||
+                std::floating_point<V>
+            const auto&
+            get(this const auto& self, V& val) {
+                if constexpr (std::same_as<char, V>)
+                    return self.get_char(val);
+                else if constexpr (std::constructible_from<std::string_view, V>)
+                    return self.get_word(val);
+                else if constexpr (std::integral<V>)
+                    return self.get_int(val);
+                else // TODO: if constexpr (std::floating_point<V>)
+                    return self;
             }
 
             const auto&
