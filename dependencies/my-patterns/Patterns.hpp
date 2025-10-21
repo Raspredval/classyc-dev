@@ -3,6 +3,7 @@
 #include <array>
 #include <memory>
 #include <string>
+#include <optional>
 #include <functional>
 
 #include <my-iostreams/IOStreams.hpp>
@@ -67,13 +68,6 @@ namespace patt {
             return *this;
         }
 
-        class Error :
-            public io::Error {
-        public:
-            Error() :
-                io::Error("match failure") {}
-        };
-
     private:
         intptr_t
             iBegin, iEnd;
@@ -86,8 +80,8 @@ namespace patt {
             Pattern()               = default;
             virtual ~Pattern()      = default;
 
-            Match
-            Eval(io::IStream& is) const {
+            std::optional<Match>
+            Eval(io::IStream& is) const noexcept {
                 return (this->bNegated)
                     ? this->negEval(is)
                     : this->normEval(is);
@@ -107,24 +101,22 @@ namespace patt {
             }
         
         protected:
-            virtual Match
-            normEval(io::IStream& is) const = 0;
+            virtual std::optional<Match>
+            normEval(io::IStream& is) const noexcept = 0;
 
-            virtual Match
-            negEval(io::IStream& is) const {
+            virtual std::optional<Match>
+            negEval(io::IStream& is) const noexcept {
                 intptr_t
                     iBegin  = is.GetPosition();
-                try {
-                    this->normEval(is);
-                }
-                catch (const io::Error& err) {
+                auto
+                    optMatch    = this->normEval(is);
+                if (!optMatch) {
                     intptr_t
                         iEnd    = is.GetPosition();
                     return Match{ iBegin, iEnd };
                 }
-
-                throw
-                    Match::Error();
+                else
+                    return std::nullopt;
             }
 
             bool
@@ -151,15 +143,15 @@ namespace patt {
             }
 
         private:
-            Match
-            normEval(io::IStream &is) const override {
+            std::optional<Match>
+            normEval(io::IStream &is) const noexcept override {
                 intptr_t
                     iBegin  = is.GetPosition();
         
                 for (char c : this->str) {
                     auto optc = is.Read();
                     if (!optc || (char)*optc != c)
-                        throw Match::Error();
+                        return std::nullopt;
                 }
         
                 intptr_t
@@ -184,10 +176,19 @@ namespace patt {
             }
         
         private:
-            Match
-            normEval(io::IStream& is) const override {
-                return this->lhs->Eval(is).Concat(
-                    this->rhs->Eval(is));
+            std::optional<Match>
+            normEval(io::IStream& is) const noexcept override {
+                auto
+                    optLhs  = this->lhs->Eval(is);
+                if (!optLhs)
+                    return std::nullopt;
+            
+                auto
+                    optRhs  = this->rhs->Eval(is);
+                if (!optRhs)
+                    return std::nullopt;
+
+                return optLhs->Concat(*optRhs);
             }
 
             patt::Pattern
@@ -212,13 +213,13 @@ namespace patt {
             }
         
         private:
-            Match
-            normEval(io::IStream& is) const override {
+            std::optional<Match>
+            normEval(io::IStream& is) const noexcept override {
                 intptr_t
                     iBegin  = is.GetPosition();
                 
                 if (!is.Read())
-                    throw Match::Error();
+                    return std::nullopt;
                 
                 intptr_t
                     iEnd    = is.GetPosition();
@@ -237,17 +238,17 @@ namespace patt {
             Clone() const override {
                 return std::make_shared<ChoicePattern>(*this);
             }
+        
         private:
-            Match
-            normEval(io::IStream& is) const override {
+            std::optional<Match>
+            normEval(io::IStream& is) const noexcept override {
                 intptr_t
                     iBegin  = is.GetPosition();
                 
-                for (const patt::Pattern& p : this->arrPatterns) {
-                    try {
-                        p->Eval(is);
-                    }
-                    catch(const Match::Error& err) {
+                for (const patt::Pattern& pattern : this->arrPatterns) {
+                    auto
+                        optMatch    = pattern->Eval(is);
+                    if (!optMatch) {
                         is.SetPosition(iBegin);
                         continue;
                     }
@@ -257,7 +258,7 @@ namespace patt {
                     return Match{ iBegin, iEnd };
                 }
 
-                throw Match::Error();
+                return std::nullopt;
             }
 
             std::array<patt::Pattern, 2>
@@ -274,7 +275,7 @@ namespace patt {
             public Pattern {
         public:
             using Callback =
-                std::function<void(io::IStream&, const io::Expected<Match>&)>;
+                std::function<void(io::IStream&, const std::optional<Match>&)>;
 
             template<typename Fn> requires
                 std::is_constructible_v<Callback, Fn>
@@ -289,22 +290,12 @@ namespace patt {
             }
         
         private:
-            Match
-            normEval(io::IStream& is) const override {
-                io::Expected<Match>
-                    var = Match{};
-                try {
-                    var = this->pattern->Eval(is);
-                }
-                catch (const Match::Error& exc) {
-                    var = std::unexpected(exc);
-                    this->fnCallback(is, var);
-                    std::rethrow_exception(
-                        std::current_exception());
-                }
-
-                this->fnCallback(is, var);
-                return *var;
+            std::optional<Match>
+            normEval(io::IStream& is) const noexcept override {
+                std::optional<Match>
+                    optMatch    = this->pattern->Eval(is);
+                this->fnCallback(is, optMatch);
+                return optMatch;
             }
         
             patt::Pattern
@@ -339,15 +330,15 @@ namespace patt {
             }
         
         private:
-            Match
-            normEval(io::IStream& is) const override {
+            std::optional<Match>
+            normEval(io::IStream& is) const noexcept override {
                 intptr_t
                     iBegin  = is.GetPosition();
                 
                 auto
                     optc    = is.Read();
                 if (!optc || !this->lpfn((int)*optc))
-                    throw Match::Error();
+                    return std::nullopt;
 
                 intptr_t
                     iEnd    = is.GetPosition();
@@ -371,41 +362,37 @@ namespace patt {
             }
 
         private:
-            Match
-            normEval(io::IStream& is) const override {
+            std::optional<Match>
+            normEval(io::IStream& is) const noexcept override {
                 intptr_t
                     iBegin  = is.GetPosition();
                 for (size_t i = 0; i != this->uCount; ++i) {
-                    this->pattern->Eval(is);
+                    if (!this->pattern->Eval(is))
+                        return std::nullopt;
                 }
 
                 intptr_t
                     iCurr   = is.GetPosition();
                 while (true) {
-                    try {
-                        this->pattern->Eval(is);
-                        iCurr   = is.GetPosition();
-                    }
-                    catch(const Match::Error& err) {
+                    if (!this->pattern->Eval(is)) {
                         is.SetPosition(iCurr);
                         break;
                     }
+
+                    iCurr   = is.GetPosition();
                 }
 
                 return Match{ iBegin, iCurr };
             }
 
-            Match
-            negEval(io::IStream& is) const override {
+            std::optional<Match>
+            negEval(io::IStream& is) const noexcept override {
                 intptr_t
                     iBegin  = is.GetPosition();
                 for (size_t i = 0; i != this->uCount; ++i) {
                     intptr_t
                         iCurr   = is.GetPosition();
-                    try {
-                        this->pattern->Eval(is);
-                    }
-                    catch (const Match::Error& err) {
+                    if (!this->pattern->Eval(is)) {
                         is.SetPosition(iCurr);
                         return Match{ iBegin, iCurr };
                     }
@@ -448,12 +435,13 @@ namespace patt {
             }
         
         private:
-            Match
-            normEval(io::IStream& is) const override {
+            std::optional<Match>
+            normEval(io::IStream& is) const noexcept override {
                 intptr_t
                     iBegin  = is.GetPosition();
                 for (size_t i = 0; i != this->uCount; ++i) {
-                    this->pattern->Eval(is);
+                    if (!this->pattern->Eval(is))
+                        return std::nullopt;
                 }
 
                 intptr_t
@@ -509,13 +497,7 @@ namespace patt {
 
                 patt::Pattern&
                 operator=(const patt::Pattern& pattern) && {
-                    auto
-                        result  = this->sptrPatterns->insert_or_assign(
-                                    std::move(this->strKey), pattern);
-                    if (!result.second)
-                        throw io::Error("failed to insert a pattern into a grammar");
-                    
-                    return result.first->second;
+                    return (*this->sptrPatterns)[this->strKey] = pattern;
                 }
             };
             
@@ -581,8 +563,8 @@ namespace patt {
             }
 
         private:
-            Match
-            normEval(io::IStream& is) const override {
+            std::optional<Match>
+            normEval(io::IStream& is) const noexcept override {
                 return (*this->sptrPatterns)[this->strKey]->Eval(is);
             }
 
@@ -609,13 +591,16 @@ namespace patt {
             }
 
         private:
-            Match
-            normEval(io::IStream& is) const override {
-                Match
-                    m   = this->pattern->Eval(is);
-                this->refCapture =
-                    m.GetString(is);
-                return m;
+            std::optional<Match>
+            normEval(io::IStream& is) const noexcept override {
+                auto
+                    optMatch    = this->pattern->Eval(is);
+                if (optMatch) {
+                    this->refCapture = 
+                        optMatch->GetString(is);
+                }
+                
+                return optMatch;
             }
 
             patt::Pattern
@@ -653,13 +638,16 @@ namespace patt {
             }
 
         private:
-            Match
-            normEval(io::IStream& is) const override {
-                Match
-                    m   = this->pattern->Eval(is);
-                this->refCaptures.push_back(
-                    m.GetString(is));
-                return m;
+            std::optional<Match>
+            normEval(io::IStream& is) const noexcept override {
+                auto
+                    optMatch    = this->pattern->Eval(is);
+                if (optMatch) {
+                    this->refCaptures.push_back(
+                        optMatch->GetString(is));
+                }
+                
+                return optMatch;
             }
 
             patt::Pattern
@@ -744,23 +732,8 @@ namespace patt {
     }
 
     [[nodiscard]]
-    inline io::Expected<Match>
-    SafeEval(const Pattern& p, io::IStream& is) noexcept {
-        io::Expected<Match>
-            var = Match{};
-        try {
-            var = p->Eval(is);
-        }
-        catch(const Match::Error& err) {
-            var = std::unexpected(err);
-        }
-
-        return var;
-    }
-
-    [[nodiscard]]
-    inline Match
-    UnsafeEval(const Pattern& p, io::IStream& is) {
+    inline std::optional<Match>
+    Eval(const Pattern& p, io::IStream& is) noexcept {
         return p->Eval(is);
     }
 }
