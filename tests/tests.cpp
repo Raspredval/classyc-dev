@@ -1,6 +1,7 @@
 #include "TestPatterns.hpp"
+#include "TestTextIO.hpp"
 
 int
 main() {
-    TestPatterns();
+    TestTextIO();
 }

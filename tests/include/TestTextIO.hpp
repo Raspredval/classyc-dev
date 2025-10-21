@@ -4,5 +4,11 @@
 
 inline void
 TestTextIO() {
+    std::string
+        strName;
+    std::string
+        strAge;
 
+    io::cin.get(strName).get(strAge);
+    io::cout.fmt("{}\t{}\n", strName, strAge);
 }
