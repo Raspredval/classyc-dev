@@ -17,7 +17,7 @@ target_compile_options(classyc
         "-Wall" "-Wextra" "-Wconversion" "-Werror")
 
 add_executable(classyc-tests
-    "tests/main.cpp")
+    "tests/tests.cpp")
 target_include_directories(classyc-tests
     PRIVATE
         "include/"
