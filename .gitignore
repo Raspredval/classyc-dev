@@ -6,4 +6,6 @@ build
 build/*
 assets
 assets/*
+tests
+tests/*
 compile_commands.json
