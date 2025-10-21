@@ -42,33 +42,33 @@ namespace io {
                 return this->CFile::Handle();
             }
         };
-
-        class IFileStream :
-            public              IStream,
-            virtual public      FileStreamBase {
-        protected:
-            IFileStream() = default;
-
-        public:
-            IFileStream(std::string_view strvFilename) :
-                FileStreamBase(strvFilename, "r") {}
-
-            std::optional<std::byte>
-            Read() override {
-                return this->CFile::Read();
-            }
-
-            size_t
-            ReadSome(std::span<std::byte> buffer) override {
-                return this->CFile::ReadSome(buffer);
-            }
-
-            bool
-            PutBack(std::byte c) override {
-                return this->CFile::PutBack(c);
-            }
-        };
     }
+
+    class IFileStream :
+        public              IStream,
+        virtual public      __impl::FileStreamBase {
+    protected:
+        IFileStream() = default;
+
+    public:
+        IFileStream(std::string_view strvFilename) :
+            FileStreamBase(strvFilename, "r") {}
+
+        std::optional<std::byte>
+        Read() override {
+            return this->CFile::Read();
+        }
+
+        size_t
+        ReadSome(std::span<std::byte> buffer) override {
+            return this->CFile::ReadSome(buffer);
+        }
+
+        bool
+        PutBack(std::byte c) override {
+            return this->CFile::PutBack(c);
+        }
+    };
 
     class OFileStream :
         public              OStream,
