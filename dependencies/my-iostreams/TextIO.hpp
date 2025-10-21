@@ -11,26 +11,26 @@ namespace io {
         class SerialTextOutput {
         public:
             const auto&
-            putc(this const auto& self, char c) {
+            put_char(this const auto& self, char c) {
                 self.stream().Write((std::byte)c);
                 return self;
             }
 
             const auto&
-            putnl(this const auto& self) {
-                return self.putc('\n');
+            put_endl(this const auto& self) {
+                return self.put_char('\n');
             }
 
             const auto&
-            puts(this const auto& self, std::string_view strv) {
+            put_str(this const auto& self, std::string_view strv) {
                 for (char c : strv)
-                    self.putc(c);
+                    self.put_char(c);
                 return self;
             }
 
             template<std::integral I>
             const auto&
-            puti(this const auto& self, I val, int base = 10) {
+            put_int(this const auto& self, I val, int base = 10) {
                 char
                     lpcTemp[32] = {0};
 
@@ -38,63 +38,61 @@ namespace io {
                     std::begin(lpcTemp),
                     std::end(lpcTemp),
                     val, base);
-                return self.puts(lpcTemp);
+                return self.put_string(lpcTemp);
             }
 
             template<std::integral I>
             const auto&
-            putd(this const auto& self, I val) {
-                return self.puti(val, 10);
+            put_dec(this const auto& self, I val) {
+                return self.put_int(val, 10);
             }
 
             template<std::integral I>
             const auto&
-            putx(this auto& self, I val) {
-                return self.puti(val, 16);
+            put_hex(this auto& self, I val) {
+                return self.put_int(val, 16);
             }
 
             template<std::integral I>
             const auto&
-            puto(this auto& self, I val) {
-                return self.puti(val, 8);
+            put_oct(this auto& self, I val) {
+                return self.put_int(val, 8);
             }
 
             template<std::integral I>
             const auto&
-            putb(this auto& self, I val) {
-                return self.puti(val, 2);
+            put_bin(this auto& self, I val) {
+                return self.put_int(val, 2);
             }
 
             template<std::floating_point F>
             const auto&
-            putf(this auto& self, F val) {
+            put_float(this auto& self, F val) {
                 char
                     lpcTemp[32] = {0};
                 
                 std::errc
                     err = std::to_chars(
-                            std::begin(lpcTemp),
-                            std::end(lpcTemp),
+                            std::begin(lpcTemp), std::end(lpcTemp),
                             val,
                             std::chars_format::fixed).ec;
-                return self.puts((err != std::errc{})
+                return self.put_str((err != std::errc{})
                     ? "NaN" : lpcTemp);
             }
 
             template<std::floating_point F>
             const auto&
-            putf(this const auto& self, F val, int precision) {
+            put_float(this const auto& self, F val, int precision) {
                 char
                     lpcTemp[32] = {0};
                 
                 std::errc
                     err = std::to_chars(
-                            std::begin(lpcTemp),
-                            std::end(lpcTemp),
+                            std::begin(lpcTemp), std::end(lpcTemp),
                             val,
                             std::chars_format::fixed,
                             precision).ec;
-                return self.puts((err != std::errc{})
+                return self.put_str((err != std::errc{})
                     ? "NaN" : lpcTemp);
             }
 
@@ -108,7 +106,7 @@ namespace io {
                                 lpcBuffer, sizeof(lpcBuffer),
                                 strfmt, std::forward<Args>(args)...);
 
-                return self.puts(std::string_view(lpcBuffer, (size_t)result.size));
+                return self.put_str(std::string_view(lpcBuffer, (size_t)result.size));
             }
 
             template<typename V> requires
@@ -117,15 +115,15 @@ namespace io {
                 std::integral<V> ||
                 std::floating_point<V>
             const auto&
-            put(this const auto& self, const V& val) {
+            put_any(this const auto& self, const V& val) {
                 if constexpr (std::same_as<V, char>)
-                    return self.putc(val);
+                    return self.put_char(val);
                 else if (std::is_constructible_v<std::string_view, V>)
-                    return self.puts({val});
+                    return self.put_str({val});
                 else if (std::is_integral_v<V>)
-                    return self.puti(val);
+                    return self.put_int(val);
                 else if constexpr (std::is_floating_point_v<V>)
-                    return self.putf(val);
+                    return self.put_float(val);
             }
 
             const auto&
@@ -146,7 +144,7 @@ namespace io {
         class SerialTextInput {
         public:
             const auto&
-            getc(this const auto& self, char& out) {
+            get_char(this const auto& self, char& out) {
                 std::optional<std::byte>
                     optc = self.stream().Read();
                 if (optc)
@@ -155,12 +153,12 @@ namespace io {
             }
 
             const auto&
-            gets(this const auto& self, std::string& out) {
+            get_str(this const auto& self, std::string& out) {
                 std::string
                     strAll;
                 std::optional<std::byte>
                     optc;
-                while ((bool)(optc = self.Stream().Read())) {
+                while ((bool)(optc = self.stream().Read())) {
                     strAll += (char)*optc;
                 }
 
@@ -169,7 +167,7 @@ namespace io {
             }
 
             const auto&
-            getln(this const auto& self, std::string& out) {
+            get_line(this const auto& self, std::string& out) {
                 std::string
                     strLine;
                 std::optional<std::byte>
@@ -183,6 +181,65 @@ namespace io {
             }
 
             const auto&
+            get_dec(this const auto& self, std::integral auto& out) {
+                return self.get_int_impl(
+                    out, 10,
+                    [](char c) -> bool {
+                        return c >= '0' && c <= '9';
+                    });
+            }
+
+            const auto&
+            get_hex(this const auto& self, std::integral auto& out) {
+                return self.get_int_impl(
+                    out, 16,
+                    [](char c) -> bool {
+                        return
+                            (c >= '0' && c <= '9') ||
+                            (c >= 'a' && c <= 'f') ||
+                            (c >= 'A' && c <= 'F');
+                    });
+            }
+
+            const auto&
+            get_oct(this const auto& self, std::integral auto& out) {
+                return self.get_int_impl(
+                    out, 8,
+                    [](char c) -> bool {
+                        return c >= '0' && c <= '7';
+                    });
+            }
+
+            const auto&
+            get_bin(this const auto& self, std::integral auto& out) {
+                return self.get_int_impl(
+                    out, 2,
+                    [](char c) -> bool {
+                        return c >= '0' && c <= '1';
+                    });
+            }
+
+            const auto&
+            get_int(this const auto& self, std::integral auto& out, int base = 10) {
+                switch (base) {
+                case 2:
+                    return self.get_bin(out);
+                
+                case 8:
+                    return self.get_oct(out);
+
+                case 10:
+                    return self.get_dec(out);
+
+                case 16:
+                    return self.get_hex(out);
+
+                default:
+                    return self;
+                }
+            }
+
+            const auto&
             forward_to(this const auto& self, io::SerialOStream& to, size_t uCount = SIZE_MAX) {
                 for (size_t i = 0; i != uCount; ++i) {
                     std::optional<std::byte>
@@ -192,6 +249,45 @@ namespace io {
 
                     to.Write(*optc);
                 }
+
+                return self;
+            }
+
+        protected:
+            const auto&
+            get_int_impl(this const auto& self, std::integral auto& out, int base, bool(*fnIsDigit)(char)) {
+                char
+                    lpcBuffer[32];
+                size_t
+                    uSize = 0;
+                std::optional<std::byte>
+                    optc;
+                while ((bool)(optc = self.stream().Read())) {
+                    if (uSize == 0) {
+                        if (fnIsDigit((char)*optc)) {
+                            lpcBuffer[uSize] = (char)*optc;
+                            uSize += 1;
+                        }
+                        else if (!isspace((int)*optc))
+                            break;
+                    }
+                    else {
+                        if (isxdigit((int)*optc)) {
+                            lpcBuffer[uSize] = (char)*optc;
+                        }
+                        else {
+                            self.stream().PutBack(*optc);
+                            break;
+                        }
+                    }
+
+                    if (uSize == sizeof(lpcBuffer))
+                        break;
+                }
+
+                std::from_chars(
+                    std::begin(lpcBuffer), std::end(lpcBuffer),
+                    out, base);
 
                 return self;
             }
