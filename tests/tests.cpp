@@ -11,9 +11,9 @@ main(int argc, const char* argv[]) {
     std::string_view
         strvTest    = argv[1];
     if (strvTest == "--patterns")
-        TestPatterns();
+        return TestPatterns();
     else if (strvTest == "--text-io")
-        TestTextIO();
+        return TestTextIO();
     else {
         io::cerr.fmt("unrecognized test: {}\n", strvTest);
         return EXIT_FAILURE;

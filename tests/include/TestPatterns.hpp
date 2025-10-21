@@ -12,7 +12,7 @@ struct MacroArgs {
         strName, strValue;
 };
 
-inline void
+inline int
 TestPatterns() {
     std::map<std::string, std::string>
         mapMacros;
@@ -75,4 +75,6 @@ TestPatterns() {
     for (const auto& [strKey, strValue] : mapMacros) {
         io::cout.fmt("{}:\t{}\n", strKey, strValue);
     }
+
+    return EXIT_SUCCESS;
 }
