@@ -1,10 +1,11 @@
 #pragma once
+#include <format>
 #include <cstdio>
 #include <cstdint>
+#include <stdexcept>
 #include <string_view>
 
 #include "IOStreams.hpp"
-#include "Logging.hpp"
 
 namespace io {
     class CFileView {
@@ -113,9 +114,9 @@ namespace io {
 
         CFile(std::string_view strvFilename, std::string_view strvMode) {
             if (!this->Open(strvFilename, strvMode)) {
-                throw io::Error(
+                throw std::runtime_error(std::format(
                     "failed to open file {} with mode {}",
-                    strvFilename, strvMode);
+                    strvFilename, strvMode));
             }
         }
 
