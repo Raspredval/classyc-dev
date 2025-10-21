@@ -18,6 +18,4 @@ main(int argc, const char* argv[]) {
         io::cerr.fmt("unrecognized test: {}\n", strvTest);
         return EXIT_FAILURE;
     }
-
-    return EXIT_SUCCESS;
 }

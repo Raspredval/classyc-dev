@@ -4,6 +4,7 @@
 #include <string>
 
 #include <my-iostreams/ConsoleStreams.hpp>
+#include <my-iostreams/BufferStreams.hpp>
 #include <my-iostreams/FileStreams.hpp>
 #include <my-patterns/Patterns.hpp>
 
@@ -17,29 +18,29 @@ TestPatterns() {
     std::map<std::string, std::string>
         mapMacros;
     size_t
-        uLineCount  = 1;
+        uLineCount      = 1;
     MacroArgs
-        argsCmdDefine;
-
+        args;
+    
     auto
-        fnDefineHandler =
-            [&argsCmdDefine, &mapMacros] (io::IStream&, const std::optional<patt::Match>& optMatch) {
+        fnHandleDefine  =
+            [&args, &mapMacros] (io::IStream&, const std::optional<patt::Match>& optMatch) {
                 if (!optMatch)
                     return;
 
                 mapMacros.emplace(
-                    std::move(argsCmdDefine.strName),
-                    std::move(argsCmdDefine.strValue));
+                    std::move(args.strName),
+                    std::move(args.strValue));
             };
     auto
-        fnLineCounter   =
+        fnCountLines    =
             [&uLineCount] (io::IStream&, const std::optional<patt::Match>& optMatch) {
                 if (optMatch)
                     uLineCount += 1;
             };
 
     patt::Pattern
-        ptEndl          = (patt::Str("\n") |= patt::None()),
+        ptEndl          = patt::Str("\n") |= patt::None(),
         ptSpacing       = patt::Space() % 1,
         ptIdentifier    =
             (patt::Alpha() |= patt::Str("_")) >>
@@ -47,29 +48,23 @@ TestPatterns() {
     patt::Pattern
         ptCmdDefine     =
             patt::Str("#define") >> ptSpacing >>
-            ptIdentifier / argsCmdDefine.strName >> ptSpacing >>
-            (-ptEndl >> patt::Any()) % 1 / argsCmdDefine.strValue >>
-            ptEndl / fnLineCounter;
-    
+            ptIdentifier / args.strName >> ptSpacing >>
+            (-ptEndl >> patt::Any()) % 1 / args.strValue >>
+            ptEndl / fnCountLines;
+    patt::Pattern
+        ptCommands      =
+            (ptCmdDefine / fnHandleDefine) % 0 >> patt::None();
+        
     io::IFileStream
         fileSource("./assets/input.txt");
 
-    while (!fileSource.EndOfStream()) {
-        std::optional<patt::Match>
-            optMatch    = patt::Eval(
-                            ptCmdDefine / fnDefineHandler,
-                            fileSource);
-        if (!optMatch) {
-            io::cerr.fmt("line {}: failed to match #define command\n", uLineCount);
-            break;
-        }
-
-        std::string
-            strMatch    = optMatch->GetString(fileSource);
-        if (strMatch.ends_with('\n'))
-            strMatch.pop_back();
-
-        io::cout.fmt("matched \"{}\"\n", strMatch);
+    std::optional<patt::Match>
+        optMatch    = patt::Eval(
+                        ptCommands,
+                        fileSource);
+    if (!optMatch) {
+        io::cerr.fmt("line {}: failed to match\n", uLineCount);
+        return EXIT_FAILURE;
     }
 
     for (const auto& [strKey, strValue] : mapMacros) {
