@@ -15,3 +15,17 @@ target_include_directories(classyc
 target_compile_options(classyc
     PRIVATE
         "-Wall" "-Wextra" "-Wconversion" "-Werror")
+
+add_executable(classyc-tests
+    "tests/main.cpp")
+target_include_directories(classyc-tests
+    PRIVATE
+        "include/"
+        "dependencies/")
+target_compile_options(classyc-tests
+    PRIVATE
+        "-Wall" "-Wextra" "-Wconversion" "-Werror")
+
+add_test(
+    NAME    classyc-tests
+    COMMAND classyc-tests)
