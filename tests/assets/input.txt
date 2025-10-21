@@ -1,0 +1,2 @@
+#define NAME    PETE
+#define AGE     12
