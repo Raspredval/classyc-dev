@@ -598,6 +598,39 @@ namespace patt {
                 this->sptrPatterns, std::move(this->strKey));
         }
 
+        class CapturePattern :
+            public Pattern {
+        public:
+            CapturePattern(const patt::Pattern& pattern, std::string& refCapture) :
+                pattern(pattern), refCapture(refCapture) {}
+
+            patt::Pattern
+            Clone() const override {
+                return std::make_shared<CapturePattern>(*this);
+            }
+
+        private:
+            Match
+            normEval(io::IStream& is) const override {
+                Match
+                    m   = this->pattern->Eval(is);
+                this->refCapture =
+                    m.GetString(is);
+                return m;
+            }
+
+            patt::Pattern
+                pattern;
+            std::string&
+                refCapture;
+        };
+
+        [[nodiscard]]
+        inline patt::Pattern
+        operator/(const patt::Pattern& pattern, std::string& refCapture) {
+            return std::make_shared<CapturePattern>(pattern, refCapture);
+        }
+
         template<typename T, typename V>
         concept Appendable =
             requires (T& obj, std::decay_t<V> const& copy_ref) {
@@ -608,16 +641,16 @@ namespace patt {
             };
         
         template<Appendable<std::string> T>
-        class CapturePattern :
+        class CaptureListPattern :
             public Pattern {
         public:
-            CapturePattern(const patt::Pattern& pattern, T& refCaptures) :
+            CaptureListPattern(const patt::Pattern& pattern, T& refCaptures) :
                 pattern(pattern),
                 refCaptures(refCaptures) {}
         
             patt::Pattern
             Clone() const override {
-                return std::make_shared<CapturePattern<T>>(*this);
+                return std::make_shared<CaptureListPattern<T>>(*this);
             }
 
         private:
@@ -640,7 +673,7 @@ namespace patt {
         [[nodiscard]]
         inline patt::Pattern
         operator/(const patt::Pattern& pattern, T& refCaptures) {
-            return std::make_shared<CapturePattern<T>>(pattern, refCaptures);
+            return std::make_shared<CaptureListPattern<T>>(pattern, refCaptures);
         }
     }
 
@@ -661,12 +694,6 @@ namespace patt {
     inline Pattern
     None() {
         return -Any();
-    }
-
-    [[nodiscard]]
-    inline Pattern
-    Endl() {
-        return patt::Str("\n") |= patt::Str("\r\n") |= patt::None();
     }
 
     [[nodiscard]]
