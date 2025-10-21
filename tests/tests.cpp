@@ -15,7 +15,7 @@ main(int argc, const char* argv[]) {
     else if (strvTest == "--text-io")
         TestTextIO();
     else {
-        io::cerr.fmt("unrecognized test: {}", strvTest);
+        io::cerr.fmt("unrecognized test: {}\n", strvTest);
         return EXIT_FAILURE;
     }
 
