@@ -268,12 +268,15 @@ namespace io {
                             lpcBuffer[uSize] = (char)*optc;
                             uSize += 1;
                         }
-                        else if (!isspace((int)*optc))
+                        else if (!isspace((int)*optc)) {
+                            self.stream().PutBack(*optc);
                             break;
+                        }
                     }
                     else {
-                        if (isxdigit((int)*optc)) {
+                        if (fnIsDigit((char)*optc)) {
                             lpcBuffer[uSize] = (char)*optc;
+                            uSize += 1;
                         }
                         else {
                             self.stream().PutBack(*optc);
