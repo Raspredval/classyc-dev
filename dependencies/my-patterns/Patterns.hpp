@@ -107,14 +107,13 @@ namespace patt {
             virtual std::optional<Match>
             negEval(io::IStream& is) const noexcept {
                 intptr_t
-                    iBegin  = is.GetPosition();
+                    iCurr   = is.GetPosition();
                 auto
                     optMatch    = this->normEval(is);
-                if (!optMatch) {
-                    intptr_t
-                        iEnd    = is.GetPosition();
-                    return Match{ iBegin, iEnd };
-                }
+                is.SetPosition(iCurr);
+
+                if (!optMatch)
+                    return Match{ iCurr, iCurr };
                 else
                     return std::nullopt;
             }
@@ -127,7 +126,7 @@ namespace patt {
         [[nodiscard]]
         inline patt::Pattern
         operator-(const patt::Pattern& pattern) {
-            return -pattern->Clone();
+            return -(pattern->Clone());
         }
 
         class StringPattern :
