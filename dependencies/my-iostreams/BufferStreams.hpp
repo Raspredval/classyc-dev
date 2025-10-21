@@ -46,12 +46,7 @@ namespace io {
             
             bool
             EndOfStream() const noexcept override {
-                if (this->retbuf.size != 0)
-                    return true;
-
-                auto
-                    itCur   = this->deqBuffer.begin() + this->iCurPos;
-                return itCur >= this->deqBuffer.end();
+                return this->flags.bEOF;
             }
 
             bool
@@ -85,7 +80,9 @@ namespace io {
                 if (itNewPos < this->deqBuffer.begin() || itNewPos >= this->deqBuffer.end())
                     return false;
 
-                this->iCurPos   = offset;
+                this->iCurPos       = offset;
+                this->flags.bEOF    = false;
+                this->retbuf.size   = 0;
                 return true;
             }
             
@@ -156,14 +153,21 @@ namespace io {
 
             std::optional<std::byte>
             Read() {
-                if (this->EndOfStream())
-                    return std::nullopt;
                 if (this->retbuf.size != 0) {
                     this->retbuf.size -= 1;
                     return this->retbuf.data[this->retbuf.size];
                 }
 
-                return *(this->deqBuffer.begin() + this->iCurPos++);
+                auto
+                    itCurr  = this->deqBuffer.begin() + this->iCurPos,
+                    itEnd   = this->deqBuffer.end();
+                if (itCurr != itEnd) {
+                    this->iCurPos   += 1;
+                    return *itCurr;
+                }
+
+                this->flags.bEOF    = true;
+                return std::nullopt;
             }
 
             size_t
@@ -196,12 +200,20 @@ namespace io {
                 deqBuffer;
             int64_t
                 iCurPos = 0;
+            
             struct {
-                std::byte
-                    data[31];
-                uint8_t
-                    size = 0;
-            } retbuf;
+                struct {
+                    std::byte
+                        data[30];
+                    uint8_t
+                        size = 0;
+                } retbuf;
+
+                struct {
+                    bool
+                        bEOF = false;
+                } flags;
+            };
         };
     }
 
