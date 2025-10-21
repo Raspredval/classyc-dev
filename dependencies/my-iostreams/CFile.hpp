@@ -83,6 +83,11 @@ namespace io {
                 this->handle);
         }
 
+        bool
+        PutBack(std::byte c) {
+            return ungetc((int)c, this->handle) != EOF;
+        }
+
     protected:
         FILE*
             handle = nullptr;

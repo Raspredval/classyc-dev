@@ -63,6 +63,11 @@ namespace io {
         ReadSome(std::span<std::byte> buffer) override {
             return this->CFileView::ReadSome(buffer);
         }
+
+        bool
+        PutBack(std::byte c) override {
+            return this->CFileView::PutBack(c);
+        }
     };
 
     class OFileViewStream :
@@ -101,6 +106,11 @@ namespace io {
         size_t
         ReadSome(std::span<std::byte> buffer) override {
             return this->CFileView::ReadSome(buffer);
+        }
+
+        bool
+        PutBack(std::byte c) override {
+            return this->CFileView::PutBack(c);
         }
 
         bool

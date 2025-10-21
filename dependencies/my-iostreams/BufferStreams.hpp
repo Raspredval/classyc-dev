@@ -46,6 +46,9 @@ namespace io {
             
             bool
             EndOfStream() const noexcept override {
+                if (this->retbuf.size != 0)
+                    return true;
+
                 auto
                     itCur   = this->deqBuffer.begin() + this->iCurPos;
                 return itCur >= this->deqBuffer.end();
@@ -135,6 +138,7 @@ namespace io {
                     itCurPos, c);
                 this->iCurPos   += 1;
 
+                this->retbuf.size = 0;
                 return true;
             }
 
@@ -146,6 +150,7 @@ namespace io {
                     itCurPos, buffer);
                 this->iCurPos   += buffer.size();
 
+                this->retbuf.size = 0;
                 return buffer.size();
             }
 
@@ -153,6 +158,10 @@ namespace io {
             Read() {
                 if (this->EndOfStream())
                     return std::nullopt;
+                if (this->retbuf.size != 0) {
+                    this->retbuf.size -= 1;
+                    return this->retbuf.data[this->retbuf.size];
+                }
 
                 return *(this->deqBuffer.begin() + this->iCurPos++);
             }
@@ -171,7 +180,25 @@ namespace io {
                 return buffer.size();
             }
 
+            bool
+            PutBack(std::byte c) {
+                if (this->retbuf.size != sizeof(this->retbuf.data)) {
+                    this->retbuf.data[this->retbuf.size] = c;
+                    this->retbuf.size += 1;
+                    return true;
+                }
+                else
+                    return false;
+            }
+    
         private:
+            struct {
+                std::byte
+                    data[31];
+                uint8_t
+                    size = 0;
+            } retbuf;
+
             std::deque<std::byte>
                 deqBuffer;
             int64_t
@@ -197,6 +224,11 @@ namespace io {
         size_t
         ReadSome(std::span<std::byte> buffer) override {
             return this->BufferStreamBase::ReadSome(buffer);
+        }
+
+        bool
+        PutBack(std::byte c) override {
+            return this->BufferStreamBase::PutBack(c);
         }
     };
 
@@ -233,6 +265,11 @@ namespace io {
         size_t
         ReadSome(std::span<std::byte> buffer) override {
             return this->BufferStreamBase::ReadSome(buffer);
+        }
+
+        bool
+        PutBack(std::byte c) override {
+            return this->BufferStreamBase::PutBack(c);
         }
 
         bool

@@ -54,6 +54,9 @@ namespace io {
         virtual size_t
         ReadSome(
             std::span<std::byte> buffer) = 0;
+
+        virtual bool
+        PutBack(std::byte c) = 0;
     };
 
     class SerialOStream :

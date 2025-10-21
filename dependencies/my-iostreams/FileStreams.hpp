@@ -62,6 +62,11 @@ namespace io {
             ReadSome(std::span<std::byte> buffer) override {
                 return this->CFile::ReadSome(buffer);
             }
+
+            bool
+            PutBack(std::byte c) override {
+                return this->CFile::PutBack(c);
+            }
         };
     }
 
@@ -111,6 +116,11 @@ namespace io {
         size_t
         ReadSome(std::span<std::byte> buffer) override {
             return this->CFile::ReadSome(buffer);
+        }
+
+        bool
+        PutBack(std::byte c) override {
+            return this->CFile::PutBack(c);
         }
     };
 }
