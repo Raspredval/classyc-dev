@@ -192,17 +192,16 @@ namespace io {
             }
     
         private:
+            std::deque<std::byte>
+                deqBuffer;
+            int64_t
+                iCurPos = 0;
             struct {
                 std::byte
                     data[31];
                 uint8_t
                     size = 0;
             } retbuf;
-
-            std::deque<std::byte>
-                deqBuffer;
-            int64_t
-                iCurPos = 0;
         };
     }
 
