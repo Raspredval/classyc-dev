@@ -666,8 +666,7 @@ namespace patt {
     [[nodiscard]]
     inline Pattern
     Str(std::string_view strv) {
-        return std::make_shared<__impl::StringPattern>(
-            strv);
+        return std::make_shared<__impl::StringPattern>(strv);
     }
 
     [[nodiscard]]
