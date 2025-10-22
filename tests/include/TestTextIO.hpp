@@ -7,6 +7,15 @@ inline int
 TestTextIO() {
     io::cout.put("Testing TextIO:\n");
 
+    const char*
+        szLocale    = "ru_RU.UTF-8";
+    if (!setlocale(LC_ALL, szLocale)) {
+        io::cerr.fmt(
+            "failed to set C locale to \"{}\"\n",
+            szLocale);
+        return EXIT_FAILURE;
+    }
+
     std::string
         strKey1;
     std::string
@@ -31,7 +40,7 @@ TestTextIO() {
 
     io::TextIO(buffTest)
         .put("City New-York\n")
-        .put("Temp -10.5C\n")
+        .put("Temp -10,5C\n")
         .put("A.P. 760mmHg\n")
         .go_start()
         .get(strKey1).get_word(strValue1)
