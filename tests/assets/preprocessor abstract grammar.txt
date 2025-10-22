@@ -1,0 +1,60 @@
+Endl:
+    ("\n" |= "\r\n" |= None) / $fnCountLines;
+Spacing:
+    Space % 1;
+OptSpacing:
+    Space % 0;
+Identifier:
+    ("_" |= Alpha) >> ("_" |= Alnum) % 0;
+
+IsCommand:
+    OptSpacing >> &("#" >> Identifier >> Space);
+
+IdentifierList:
+    Identifier / $cmd.name_list >> (OptSpacing >> "," >> OptSpacing >> IdentifierList) % -1;
+
+CmdDefine:
+    "#define" >> Spacing >>
+    Identifier / $cmd.key >> (
+        OptSpacing >> "(" >> OptSpacing >> IdentifierList >> OptSpacing >> ")" |=
+        Spacing
+    ) >> ((-Endl >> Any) % 1) / $cmd.value >> Endl;
+
+CmdUndef:
+    "#undef" >> Spacing >>
+    Identifier / $cmd.key >>
+    OptSpacing >> Endl;
+
+CmdIfDef:
+    "#ifdef" >> Spacing >>
+    Identifier / $cmd.key >>
+    OptSpacing >> Endl;
+
+CmdIfNDef:
+    "#ifndef" >> Spacing >>
+    Identifier / $cmd.key >>
+    OptSpacing >> Endl;
+
+CmdRequire:
+    "#require" >> Spacing >> (
+        "<" >> Filepath / $args.path >> ">" |=
+        "\"" >> Filepath / $args.path >> "\""
+    ) >> OptSpacing >> Endl;
+
+CmdInsert:
+    "#insert" >> Spacing >> (
+        "<" >> Filepath / $args.path >> ">" |=
+        "\"" >> Filepath / $args.path >> "\""
+    ) >> OptSpacing >> Endl;
+
+Command:
+    (
+        CmdDefine   / $fnHandleDefine   |=
+        CmdUndef    / $fnHandleUndef    |=
+        CmdIfDef    / $fnHandleIfDef    |=
+        CmdIfNDef   / $fnHandleIfNDef   |=
+        CmdRequire  / $fnHandleRequire  |=
+        CmdInsert   / $fnHandleInsert
+    ) / $fnHandleCommand;
+
+# TODO: Source Macro ValueList If ElseIf Else Endif
