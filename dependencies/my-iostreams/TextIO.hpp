@@ -266,7 +266,7 @@ namespace io {
 
             template<typename V> requires
                 std::same_as<char, V> ||
-                std::constructible_from<std::string_view, V> ||
+                std::same_as<std::string, V> ||
                 std::integral<V> ||
                 std::floating_point<V>
             const auto&
