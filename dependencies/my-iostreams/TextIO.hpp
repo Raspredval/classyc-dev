@@ -297,7 +297,7 @@ namespace io {
                         goto ParseNaturalPart;
                     }
                     else if (c == decimal_point) {
-                        lpcBuffer[uSize] = c;
+                        lpcBuffer[uSize] = '.';
                         uSize += 1;
                         goto ParseFractionalPart;
                     }
@@ -320,7 +320,7 @@ namespace io {
                         goto ParseNaturalPart;
                     }
                     else if (c == decimal_point) {
-                        lpcBuffer[uSize] = c;
+                        lpcBuffer[uSize] = '.';
                         uSize += 1;
                         goto ParseFractionalPart;
                     }
