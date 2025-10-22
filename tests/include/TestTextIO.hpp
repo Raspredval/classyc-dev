@@ -31,7 +31,7 @@ TestTextIO() {
 
     io::TextIO(buffTest)
         .put("City New-York\n")
-        .put("Temp -10,5C\n")
+        .put("Temp -10.5C\n")
         .put("A.P. 760mmHg\n")
         .go_start()
         .get(strKey1).get_word(strValue1)
