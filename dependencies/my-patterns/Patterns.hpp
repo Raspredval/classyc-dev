@@ -661,6 +661,38 @@ namespace patt {
         operator/(const patt::Pattern& pattern, T& refCaptures) {
             return std::make_shared<CaptureListPattern<T>>(pattern, refCaptures);
         }
+
+        class LookAheadPattern :
+            public Pattern {
+        public:
+            LookAheadPattern(const patt::Pattern& pattern) :
+                pattern(pattern) {}
+
+            patt::Pattern
+            Clone() const override {
+                return std::make_shared<LookAheadPattern>(*this);
+            }
+
+        private:
+            std::optional<Match>
+            normEval(io::IStream& is) const noexcept override {
+                intptr_t
+                    iCurr       = is.GetPosition();
+                auto
+                    optMatch    = this->pattern->Eval(is);
+                is.SetPosition(iCurr);
+                
+                return optMatch;
+            }
+
+            patt::Pattern
+                pattern;
+        };
+
+        inline patt::Pattern
+        operator&(const patt::Pattern& pattern) {
+            return std::make_shared<LookAheadPattern>(pattern);
+        }
     }
 
     [[nodiscard]]
