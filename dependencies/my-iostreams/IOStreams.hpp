@@ -1,6 +1,7 @@
 #pragma once
 #include <span>
 #include <cstdint>
+#include <cstddef>
 #include <optional>
 
 namespace io {
