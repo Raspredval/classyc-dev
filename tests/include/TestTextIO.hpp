@@ -21,8 +21,8 @@ TestTextIO() {
 
     std::string
         strKey3;
-    int64_t
-        iValue3;
+    double
+        fValue3;
     std::string
         strUnit3;
 
@@ -32,15 +32,15 @@ TestTextIO() {
     io::TextIO(buffTest)
         .put("City New-York\n")
         .put("Temp -10.5C\n")
-        .put("A.P. 760mmHg\n")
+        .put("A.P. 760,00mmHg\n")
         .go_start()
         .get(strKey1).get_word(strValue1)
         .get(strKey2).get_float(fValue2).get_word(strUnit2)
-        .get(strKey3).get_int(iValue3).get_word(strUnit3);
+        .get(strKey3).get_float(fValue3).get_word(strUnit3);
 
     io::cout.fmt("{}\t{}\n", strKey1, strValue1);
     io::cout.fmt("{}\t{}\t{}\n", strKey2, fValue2, strUnit2);
-    io::cout.fmt("{}\t{}\t{}\n", strKey3, iValue3, strUnit3);
+    io::cout.fmt("{}\t{}\t{}\n", strKey3, fValue3, strUnit3);
 
     return EXIT_SUCCESS;
 }
