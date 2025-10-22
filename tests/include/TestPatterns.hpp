@@ -15,6 +15,8 @@ struct MacroArgs {
 
 inline int
 TestPatterns() {
+    io::cout.put("Testing Patterns:\n");
+
     std::map<std::string, std::string>
         mapMacros;
     MacroArgs

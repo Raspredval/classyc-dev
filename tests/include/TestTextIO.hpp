@@ -5,21 +5,42 @@
 
 inline int
 TestTextIO() {
+    io::cout.put("Testing TextIO:\n");
+
     std::string
-        strName;
+        strKey1;
     std::string
-        strAge;
+        strValue1;
+    
+    std::string
+        strKey2;
+    float
+        fValue2;
+    std::string
+        strUnit2;
+
+    std::string
+        strKey3;
+    int
+        iValue3;
+    std::string
+        strUnit3;
 
     io::IOBufferStream
         buffTest;
 
     io::TextIO(buffTest)
-        .put_str("Jhon 12")
+        .put("City New-York\n")
+        .put("Temp -10.5C\n")
+        .put("A.P. 760mmHg\n")
         .go_start()
-        .get(strName)
-        .get(strAge);
+        .get(strKey1).get_word(strValue1)
+        .get(strKey2).get_float(fValue2).get_word(strUnit2)
+        .get(strKey3).get_int(iValue3).get_word(strUnit3);
 
-    io::cout.fmt("{}\t{}\n", strName, strAge);
+    io::cout.fmt("{}\t{}\n", strKey1, strValue1);
+    io::cout.fmt("{}\t{}\t{}\n", strKey2, fValue2, strUnit2);
+    io::cout.fmt("{}\t{}\t{}\n", strKey3, iValue3, strUnit3);
 
     return EXIT_SUCCESS;
 }
