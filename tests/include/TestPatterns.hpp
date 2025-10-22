@@ -59,9 +59,7 @@ TestPatterns() {
         fileSource("./assets/input.txt");
 
     std::optional<patt::Match>
-        optMatch    = patt::Eval(
-                        ptCommands,
-                        fileSource);
+        optMatch    = patt::Eval(ptCommands, fileSource);
     if (!optMatch) {
         io::cerr.fmt("line {}: failed to match\n", uLineCount);
         return EXIT_FAILURE;
@@ -70,6 +68,26 @@ TestPatterns() {
     for (const auto& [strKey, strValue] : mapMacros) {
         io::cout.fmt("[{}]:\t\"{}\"\n", strKey, strValue);
     }
+
+    patt::Pattern
+        ptFooBar    = patt::Str("foo") >> &patt::Str("bar"),
+        ptBarBuz    = patt::Str("bar") >> &patt::Str("buz"),
+        ptBuzzKill  = patt::Str("buzzkill");
+    io::IOBufferStream
+        buffTest;
+    io::TextIO(buffTest)
+        .put("foobarbuzzkill")
+        .go_start();
+
+    std::optional<patt::Match>
+        optWordMash = patt::Eval(ptFooBar >> ptBarBuz >> ptBuzzKill, buffTest);
+    if (!optWordMash) {
+        io::cerr.put("failed to match word mash\n");
+        return EXIT_FAILURE;
+    }
+
+    io::cout.fmt("matched \"{}\"\n",
+        optWordMash->GetString(buffTest));
 
     return EXIT_SUCCESS;
 }
