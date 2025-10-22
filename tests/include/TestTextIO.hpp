@@ -14,14 +14,14 @@ TestTextIO() {
     
     std::string
         strKey2;
-    float
+    double
         fValue2;
     std::string
         strUnit2;
 
     std::string
         strKey3;
-    int
+    int64_t
         iValue3;
     std::string
         strUnit3;
