@@ -304,34 +304,39 @@ namespace io {
                     uSize = 0;
                 std::optional<std::byte>
                     optc;
+                
                 while ((bool)(optc = self.stream().Read())) {
-                    if (uSize == 0) {
-                        if (fnIsDigit((char)*optc)) {
-                            lpcBuffer[uSize] = (char)*optc;
-                            uSize += 1;
-                        }
-                        else if (!isspace((int)*optc)) {
-                            self.stream().PutBack(*optc);
-                            break;
-                        }
+                    if (!isspace((int)*optc)) {
+                        self.stream().PutBack(*optc);
+                        break;
                     }
-                    else {
-                        if (fnIsDigit((char)*optc)) {
-                            lpcBuffer[uSize] = (char)*optc;
-                            uSize += 1;
-                        }
-                        else {
-                            self.stream().PutBack(*optc);
-                            break;
-                        }
-                    }
+                }
 
+                if ((bool)(optc = self.stream().Read())) {
+                    if ((char)*optc == '-' || (char)*optc == '+') {
+                        lpcBuffer[uSize] = (char)*optc;
+                        uSize += 1;
+                    }
+                    else
+                        self.stream().PutBack(*optc);
+                }
+
+                while ((bool)(optc = self.stream().Read())) {
                     if (uSize == sizeof(lpcBuffer))
                         break;
+
+                    if (fnIsDigit((char)*optc)) {
+                        lpcBuffer[uSize] = (char)*optc;
+                        uSize += 1;
+                    }
+                    else {
+                        self.stream().PutBack(*optc);
+                        break;
+                    }
                 }
 
                 std::from_chars(
-                    std::begin(lpcBuffer), std::end(lpcBuffer),
+                    lpcBuffer, lpcBuffer + uSize,
                     out, base);
 
                 return self;
