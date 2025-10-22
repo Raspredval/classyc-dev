@@ -264,6 +264,99 @@ namespace io {
                 }
             }
 
+            const auto&
+            get_float(this const auto& self, std::floating_point auto& out) {
+                const char
+                    decimal_point = *localeconv()->decimal_point;
+                char
+                    lpcBuffer[32];
+                size_t
+                    uSize = 0;
+                std::optional<std::byte>
+                    optc;
+            
+            ParseSpacing:
+                if ((bool)(optc = self.stream().Read())) {
+                    if (!isspace((int)*optc)) {
+                        self.stream().PutBack(*optc);
+                        goto ParseFirstChar;
+                    }
+                    else
+                        goto ParseSpacing;
+                }
+                else
+                    return self;
+
+            ParseFirstChar:
+                if ((bool)(optc = self.stream().Read())) {
+                    char c = (char)*optc;
+                    
+                    if (c == '-' || c == '+' || isdigit(c)) {
+                        lpcBuffer[uSize] = c;
+                        uSize += 1;
+                        goto ParseNaturalPart;
+                    }
+                    else if (c == decimal_point) {
+                        lpcBuffer[uSize] = c;
+                        uSize += 1;
+                        goto ParseFractionalPart;
+                    }
+                    else {
+                        self.stream().PutBack(*optc);
+                        return self;
+                    }
+                }
+                else
+                    return self;
+
+            ParseNaturalPart:
+                if (uSize == sizeof(lpcBuffer))
+                    goto GenerateValue;
+                if ((bool)(optc = self.stream().Read())) {
+                    char c = (char)*optc;
+                    if (isdigit(c)) {
+                        lpcBuffer[uSize] = c;
+                        uSize += 1;
+                        goto ParseNaturalPart;
+                    }
+                    else if (c == decimal_point) {
+                        lpcBuffer[uSize] = c;
+                        uSize += 1;
+                        goto ParseFractionalPart;
+                    }
+                    else {
+                        self.stream().PutBack(*optc);
+                        goto GenerateValue;
+                    }
+                }
+                else
+                    goto GenerateValue;
+
+            ParseFractionalPart:
+                if (uSize == sizeof(lpcBuffer))
+                    goto GenerateValue;
+                if ((bool)(optc = self.stream().Read())) {
+                    char c = (char)*optc;
+                    if (isdigit(c)) {
+                        lpcBuffer[uSize] = c;
+                        uSize += 1;
+                        goto ParseFractionalPart;
+                    }
+                    else {
+                        self.stream().PutBack(*optc);
+                        goto GenerateValue;
+                    }
+                }
+                else
+                    goto GenerateValue;
+
+            GenerateValue:
+                std::from_chars(
+                    lpcBuffer, lpcBuffer + uSize,
+                    out, std::chars_format::fixed);
+                return self;
+            }
+
             template<typename V> requires
                 std::same_as<char, V> ||
                 std::same_as<std::string, V> ||
@@ -277,7 +370,9 @@ namespace io {
                     return self.get_word(val);
                 else if constexpr (std::integral<V>)
                     return self.get_int(val);
-                else // TODO: if constexpr (std::floating_point<V>)
+                else if constexpr (std::floating_point<V>)
+                    return self.get_float(val);
+                else
                     return self;
             }
 
@@ -305,40 +400,57 @@ namespace io {
                 std::optional<std::byte>
                     optc;
                 
-                while ((bool)(optc = self.stream().Read())) {
+            ParseSpacing:
+                if ((bool)(optc = self.stream().Read())) {
                     if (!isspace((int)*optc)) {
                         self.stream().PutBack(*optc);
-                        break;
-                    }
-                }
-
-                if ((bool)(optc = self.stream().Read())) {
-                    if ((char)*optc == '-' || (char)*optc == '+') {
-                        lpcBuffer[uSize] = (char)*optc;
-                        uSize += 1;
+                        goto ParseFirstChar;
                     }
                     else
-                        self.stream().PutBack(*optc);
+                        goto ParseSpacing;
                 }
+                else
+                    return self;
 
-                while ((bool)(optc = self.stream().Read())) {
-                    if (uSize == sizeof(lpcBuffer))
-                        break;
-
-                    if (fnIsDigit((char)*optc)) {
-                        lpcBuffer[uSize] = (char)*optc;
+            ParseFirstChar:
+                if ((bool)(optc = self.stream().Read())) {
+                    char c = (char)*optc;
+                    
+                    if (c == '-' || c == '+' || isdigit(c)) {
+                        lpcBuffer[uSize] = c;
                         uSize += 1;
+                        goto ParseDigits;
                     }
                     else {
                         self.stream().PutBack(*optc);
-                        break;
+                        return self;
                     }
                 }
+                else
+                    return self;
 
+            ParseDigits:
+                if (uSize == sizeof(lpcBuffer))
+                    goto GenerateValue;
+                if ((bool)(optc = self.stream().Read())) {
+                    char c = (char)*optc;
+                    if (fnIsDigit(c)) {
+                        lpcBuffer[uSize] = c;
+                        uSize += 1;
+                        goto ParseDigits;
+                    }
+                    else {
+                        self.stream().PutBack(*optc);
+                        goto GenerateValue;
+                    }
+                }
+                else
+                    goto GenerateValue;
+
+            GenerateValue:
                 std::from_chars(
                     lpcBuffer, lpcBuffer + uSize,
                     out, base);
-
                 return self;
             }
         };
