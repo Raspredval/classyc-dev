@@ -40,8 +40,8 @@ add_dependencies(classyc-tests
 include(CTest)
 
 add_test(
-    NAME    classyc-test-patterns
-    COMMAND classyc-tests "--patterns")
-add_test(
     NAME    classyc-test-text-io
     COMMAND classyc-tests "--text-io")
+add_test(
+    NAME    classyc-test-patterns
+    COMMAND classyc-tests "--patterns")
