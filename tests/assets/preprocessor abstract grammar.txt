@@ -11,7 +11,7 @@ IsCommand:
     OptSpacing >> &("#" >> Identifier >> Space);
 
 IdentifierList:
-    Identifier / $cmd.name_list >> (OptSpacing >> "," >> OptSpacing >> IdentifierList) % -1;
+    Identifier / $cmd.args_list >> (OptSpacing >> "," >> OptSpacing >> IdentifierList) % -1;
 
 CmdDefine:
     "#define" >> Spacing >>
@@ -37,14 +37,14 @@ CmdIfNDef:
 
 CmdRequire:
     "#require" >> Spacing >> (
-        "<" >> Filepath / $args.path >> ">" |=
-        "\"" >> Filepath / $args.path >> "\""
+        "<" >> Filepath / $cmd.key >> ">" |=
+        "\"" >> Filepath / $cmd.key >> "\""
     ) >> OptSpacing >> Endl;
 
 CmdInsert:
     "#insert" >> Spacing >> (
-        "<" >> Filepath / $args.path >> ">" |=
-        "\"" >> Filepath / $args.path >> "\""
+        "<" >> Filepath / $cmd.key >> ">" |=
+        "\"" >> Filepath / $cmd.key >> "\""
     ) >> OptSpacing >> Endl;
 
 Command:
