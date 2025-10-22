@@ -266,8 +266,6 @@ namespace io {
 
             const auto&
             get_float(this const auto& self, std::floating_point auto& out) {
-                const char
-                    decimal_point = *localeconv()->decimal_point;
                 char
                     lpcBuffer[32];
                 size_t
@@ -296,7 +294,7 @@ namespace io {
                         uSize += 1;
                         goto ParseNaturalPart;
                     }
-                    else if (c == decimal_point) {
+                    else if (c == '.' || c == ',') {
                         lpcBuffer[uSize] = '.';
                         uSize += 1;
                         goto ParseFractionalPart;
@@ -319,7 +317,7 @@ namespace io {
                         uSize += 1;
                         goto ParseNaturalPart;
                     }
-                    else if (c == decimal_point) {
+                    else if (c == '.' || c == ',') {
                         lpcBuffer[uSize] = '.';
                         uSize += 1;
                         goto ParseFractionalPart;
