@@ -14,9 +14,12 @@ namespace Preprocessor {
         class Macro {
         public:
             virtual void
-            Expand(io::IOBufferStream& buffLine) = 0;
+            Expand(io::IOBufferStream& buffLine, intptr_t iReplaceBegin, intptr_t iReplaceEnd) = 0;
 
             virtual ~Macro() = default;
+
+            static void
+            ExpandMacros(io::IOBufferStream& buffLine);
         };
     }
 }
