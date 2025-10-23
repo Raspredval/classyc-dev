@@ -7,35 +7,6 @@
 
 namespace io {
     namespace __impl {
-        template<typename I, typename T>
-        concept MutableIterator =
-            requires(I it, T& val, const T& cval) {
-                { val = *it  };
-                { *it = cval };
-            } &&
-            std::three_way_comparable<I>;
-
-        template<typename I, typename T>
-        concept ConstIterator =
-            requires(I it, T& val) {
-                { val = *it };
-            } &&
-            std::three_way_comparable<I>;
-
-        template<typename R, typename T>
-        concept ConstRange =
-            requires(R rng) {
-                { rng.begin() } -> ConstIterator<T>;
-                { rng.end()   } -> ConstIterator<T>;
-            };
-
-        template<typename R, typename T>
-        concept MutableRange =
-            requires(R rng) {
-                { rng.begin() } -> MutableIterator<T>;
-                { rng.end()   } -> MutableIterator<T>;
-            };
-
         class BufferStreamBase :
             virtual public  StreamState,
             virtual public  StreamPosition {
@@ -85,22 +56,6 @@ namespace io {
                 this->retbuf.size   = 0;
                 return true;
             }
-            
-            template<ConstIterator<std::byte> I>
-            intptr_t
-            Insert(intptr_t iWhere, I itBegin, I itEnd) {
-                return this->deqBuffer.insert(
-                    this->deqBuffer.begin() + iWhere,
-                    itBegin, itEnd) - this->deqBuffer.begin();
-            }
-
-            template<ConstRange<std::byte> R>
-            intptr_t
-            Insert(intptr_t iWhere, R&& bytes) {
-                return this->Insert(iWhere,
-                    std::forward<R>(bytes).begin(),
-                    std::forward<R>(bytes).end());
-            }
 
             intptr_t
             Erase(intptr_t iFirst, intptr_t iLast) {
@@ -109,21 +64,45 @@ namespace io {
                     this->deqBuffer.begin() + iLast) - this->deqBuffer.begin();
             }
 
-            template<ConstIterator<std::byte> I>
             intptr_t
-            Replace(intptr_t iFirst, intptr_t iLast, I itBegin, I itEnd) {
-                return this->Insert(
-                    this->Erase(iFirst, iLast),
-                    itBegin, itEnd);
+            Insert(intptr_t iWhere, std::span<const std::byte> bytes) {
+                auto
+                    itWhere = this->deqBuffer.begin() + iWhere;
+                this->deqBuffer.insert(
+                    itWhere,
+                    bytes.begin(),
+                    bytes.end());
+                return iWhere;
             }
 
-            template<ConstRange<std::byte> R>
             intptr_t
-            Replace(intptr_t iFirst, intptr_t iLast, R&& bytes) {
-                return this->Replace(
-                    iFirst, iLast,
-                    std::forward<R>(bytes).begin(),
-                    std::forward<R>(bytes).end());
+            Insert(intptr_t iWhere, io::IStream& is, size_t uCount = SIZE_MAX) {
+                auto
+                    itWhere = this->deqBuffer.begin() + iWhere;
+                for (size_t i = 0; i != uCount; ++i) {
+                    std::optional<std::byte>
+                        optc    = is.Read();
+                    if (!optc)
+                        break;
+
+                    itWhere     = ++this->deqBuffer.insert(itWhere, *optc);
+                }
+
+                return iWhere;
+            }
+
+            intptr_t
+            Replace(intptr_t iFirst, intptr_t iLast, std::span<const std::byte> bytes) {
+                return this->Insert(
+                    this->Erase(iFirst, iLast),
+                    bytes);
+            }
+
+            intptr_t
+            Replace(intptr_t iFirst, intptr_t iLast, io::IStream& is, size_t uCount = SIZE_MAX) {
+                return this->Insert(
+                    this->Erase(iFirst, iLast),
+                    is, uCount);
             }
 
         protected:
