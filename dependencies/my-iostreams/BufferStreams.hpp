@@ -76,7 +76,7 @@ namespace io {
             }
 
             intptr_t
-            Insert(intptr_t iWhere, io::IStream& is, size_t uCount = SIZE_MAX) {
+            Insert(intptr_t iWhere, io::SerialIStream& is, size_t uCount = SIZE_MAX) {
                 auto
                     itWhere = this->deqBuffer.begin() + iWhere;
                 for (size_t i = 0; i != uCount; ++i) {
@@ -99,7 +99,7 @@ namespace io {
             }
 
             intptr_t
-            Replace(intptr_t iFirst, intptr_t iLast, io::IStream& is, size_t uCount = SIZE_MAX) {
+            Replace(intptr_t iFirst, intptr_t iLast, io::SerialIStream& is, size_t uCount = SIZE_MAX) {
                 return this->Insert(
                     this->Erase(iFirst, iLast),
                     is, uCount);
