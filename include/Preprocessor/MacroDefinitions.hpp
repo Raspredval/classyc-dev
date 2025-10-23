@@ -2,7 +2,6 @@
 #include <map>
 #include <memory>
 #include <string>
-#include <string_view>
 
 #include "Macro.hpp"
 
@@ -22,10 +21,10 @@ namespace Preprocessor {
         class MacroDefinitions {
         public:
             bool
-            Insert(std::string_view strvKey, const PP::Macro& macro) {
+            Insert(const std::string& strKey, const PP::Macro& macro) {
                 auto
                     result  = this->mapMacros.emplace(
-                                strvKey, macro);
+                                strKey, macro);
                 return result.second;
             }
 
@@ -45,13 +44,20 @@ namespace Preprocessor {
             }
 
             PP::Macro
-            GetMacro(std::string_view strvKey) const {
-
+            GetMacro(const std::string& strKey) const {
+                auto
+                    it  = this->mapMacros.find(strKey);
+                if (it != this->mapMacros.end())
+                    return it->second;
+                else
+                    return (this->HasParent())
+                        ? this->sptrParent->GetMacro(strKey)
+                        : nullptr;
             }
 
             PP::Macro
-            operator[](std::string_view strvKey) const {
-                return this->GetMacro(strvKey);
+            operator[](const std::string& strKey) const {
+                return this->GetMacro(strKey);
             }
 
         private:
