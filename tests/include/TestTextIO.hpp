@@ -41,9 +41,11 @@ TestTextIO() {
         .put("A.P. 760,00mmHg\n")
         .go_start();
 
-    buffTest.Replace(
-        5, 13, // "New-York" stream pos
-        buffReplace);
+    io::cout
+        .put(buffTest.Replace(
+            5, 13, // "New-York" stream pos
+            buffReplace))
+        .put_endl();
 
     io::TextInput(buffTest)
         .get(strKey1).get_word(strValue1)
