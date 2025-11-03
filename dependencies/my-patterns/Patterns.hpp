@@ -561,7 +561,11 @@ namespace patt {
         private:
             std::optional<Match>
             normEval(io::IStream& is) const noexcept override {
-                return this->itPattern->second->Eval(is);
+                const patt::Pattern&
+                    pattern = this->itPattern->second;
+                if (pattern == nullptr)
+                    return std::nullopt;
+                return pattern->Eval(is);
             }
 
             MapPatterns::iterator
