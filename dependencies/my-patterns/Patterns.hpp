@@ -42,22 +42,47 @@ namespace patt {
             return (size_t)(this->iEnd - this->iBegin);
         }
 
+        size_t
+        Forward(io::IStream& from, io::OStream& to) {
+            intptr_t
+                iCurr   = from.GetPosition();
+            from.SetPosition(this->Begin());
+            
+            size_t i = 0;
+            while (i != this->Length()) {
+                std::optional<std::byte>
+                    optc    = from.Read();
+                if (!(optc && to.Write(*optc)))
+                    break;
+                i += 1;
+            }
+
+            from.SetPosition(iCurr);
+            return i;
+        }
+
         std::string
         GetString(io::IStream& is) const {
             intptr_t
-                iCurrentPos = is.GetPosition();
+                iCurr   = is.GetPosition();
             is.SetPosition(this->iBegin);
                 
             std::string
                 strMatch    = {};
-            strMatch.resize(this->Length());
+            size_t
+                uMatchLen   = this->Length();
+            strMatch.reserve(uMatchLen);
             
-            is.ReadSome({
-                (std::byte*)strMatch.data(),
-                strMatch.size()
-            });
+            for (size_t i = 0; i != uMatchLen; ++i) {
+                std::optional<std::byte>
+                    optc    = is.Read();
+                if (!optc)
+                    break;
+                strMatch.push_back(
+                    (char)*optc);
+            }
 
-            is.SetPosition(iCurrentPos);
+            is.SetPosition(iCurr);
             return strMatch;
         }
 
@@ -630,6 +655,39 @@ namespace patt {
         inline patt::Pattern
         operator/(const patt::Pattern& pattern, T& refCaptures) {
             return std::make_shared<CaptureListPattern<T>>(pattern, refCaptures);
+        }
+
+        class ForwardPattern :
+            public Pattern {
+        public:
+            ForwardPattern(const patt::Pattern& pattern, io::OStream& refStream) :
+                pattern(pattern), refStream(refStream) {}
+
+            patt::Pattern
+            Clone() const override {
+                return std::make_shared<ForwardPattern>(*this);
+            }
+            
+        private:
+            std::optional<Match>
+            normEval(io::IStream& is) const noexcept override {
+                auto
+                    optMatch    = this->pattern->Eval(is);
+                if (optMatch)
+                    optMatch->Forward(is, this->refStream);
+                return optMatch;
+            }
+
+            patt::Pattern
+                pattern;
+            io::OStream&
+                refStream;
+        };
+
+        [[nodiscard]]
+        inline patt::Pattern
+        operator/(const patt::Pattern& pattern, io::OStream& refStream) {
+            return std::make_shared<ForwardPattern>(pattern, refStream);
         }
 
         class LookAheadPattern :

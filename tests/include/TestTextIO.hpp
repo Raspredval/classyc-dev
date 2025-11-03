@@ -27,13 +27,25 @@ TestTextIO() {
         strUnit3;
 
     io::IOBufferStream
+        buffReplace;
+    io::TextOutput(buffReplace)
+        .put("London")
+        .go_start();
+
+    io::IOBufferStream
         buffTest;
 
-    io::TextIO(buffTest)
+    io::TextOutput(buffTest)
         .put("City New-York\n")
         .put("Temp -10.5C\n")
         .put("A.P. 760,00mmHg\n")
-        .go_start()
+        .go_start();
+
+    buffTest.Replace(
+        5, 13, // "New-York" stream pos
+        buffReplace);
+
+    io::TextInput(buffTest)
         .get(strKey1).get_word(strValue1)
         .get(strKey2).get_float(fValue2).get_word(strUnit2)
         .get(strKey3).get_float(fValue3).get_word(strUnit3);
