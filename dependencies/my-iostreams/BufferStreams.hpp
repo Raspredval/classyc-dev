@@ -17,7 +17,7 @@ namespace io {
             
             bool
             EndOfStream() const noexcept override {
-                return this->flags.bEOF;
+                return this->flags_eof;
             }
 
             bool
@@ -28,6 +28,11 @@ namespace io {
             intptr_t
             GetPosition() const noexcept override {
                 return this->iCurPos;
+            }
+
+            void
+            ClearFlags() noexcept override {
+                this->flags_eof = false;
             }
 
             bool
@@ -52,8 +57,8 @@ namespace io {
                     return false;
 
                 this->iCurPos       = offset;
-                this->flags.bEOF    = false;
-                this->retbuf.size   = 0;
+                this->flags_eof     = false;
+                this->retbuf_size   = 0;
                 return true;
             }
 
@@ -62,6 +67,9 @@ namespace io {
                 return this->deqBuffer.erase(
                     this->deqBuffer.begin() + iFirst,
                     this->deqBuffer.begin() + iLast) - this->deqBuffer.begin();
+                this->iCurPos   = std::min<intptr_t>(
+                                    this->iCurPos,
+                                    (intptr_t)this->deqBuffer.size());
             }
 
             intptr_t
@@ -105,6 +113,13 @@ namespace io {
                     is, uCount);
             }
 
+            void
+            ClearBuffer() {
+                this->deqBuffer.clear();
+                this->iCurPos   = 0;
+                this->ClearFlags();
+            }
+
         protected:
             bool
             Write(std::byte c) {
@@ -114,7 +129,8 @@ namespace io {
                     itCurPos, c);
                 this->iCurPos   += 1;
 
-                this->retbuf.size = 0;
+                this->retbuf_size = 0;
+                this->ClearFlags();  
                 return true;
             }
 
@@ -126,15 +142,16 @@ namespace io {
                     itCurPos, buffer);
                 this->iCurPos   += buffer.size();
 
-                this->retbuf.size = 0;
+                this->retbuf_size = 0;
+                this->ClearFlags();
                 return buffer.size();
             }
 
             std::optional<std::byte>
             Read() {
-                if (this->retbuf.size != 0) {
-                    this->retbuf.size -= 1;
-                    return this->retbuf.data[this->retbuf.size];
+                if (this->retbuf_size != 0) {
+                    this->retbuf_size -= 1;
+                    return this->retbuf[this->retbuf_size];
                 }
 
                 auto
@@ -145,7 +162,7 @@ namespace io {
                     return *itCurr;
                 }
 
-                this->flags.bEOF    = true;
+                this->flags_eof = true;
                 return std::nullopt;
             }
 
@@ -154,8 +171,9 @@ namespace io {
                 for (size_t i = 0; i != buffer.size(); ++i) {
                     std::optional<std::byte>
                         c   = this->Read();
-                    if (!c.has_value())
+                    if (!c.has_value()) {
                         return i;
+                    }
 
                     buffer[i] = *c;
                 }
@@ -165,9 +183,10 @@ namespace io {
 
             bool
             PutBack(std::byte c) {
-                if (this->retbuf.size != sizeof(this->retbuf.data)) {
-                    this->retbuf.data[this->retbuf.size] = c;
-                    this->retbuf.size += 1;
+                if (this->retbuf_size < sizeof(this->retbuf)) {
+                    this->retbuf[this->retbuf_size] = c;
+                    this->retbuf_size += 1;
+                    this->ClearFlags();
                     return true;
                 }
                 else
@@ -177,21 +196,15 @@ namespace io {
         private:
             std::deque<std::byte>
                 deqBuffer;
-            int64_t
+            intptr_t
                 iCurPos = 0;
             
             struct {
-                struct {
-                    std::byte
-                        data[30];
-                    uint8_t
-                        size = 0;
-                } retbuf;
-
-                struct {
-                    bool
-                        bEOF = false;
-                } flags;
+                std::byte
+                    retbuf[alignof(intptr_t) - 1];
+                uint8_t
+                    retbuf_size : 7 = 0,
+                    flags_eof   : 1 = false;
             };
         };
     }
