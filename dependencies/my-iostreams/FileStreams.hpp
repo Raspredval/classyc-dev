@@ -13,8 +13,6 @@ namespace io {
             virtual public  StreamState,
             virtual public  StreamPosition {
         public:
-            FileViewStreamBase() = default;
-
             FileViewStreamBase(FILE* handle) :
                 handle(handle) {}
 
@@ -103,20 +101,17 @@ namespace io {
 
         class FileStreamBase :
             public FileViewStreamBase {
-        private:
-            FileStreamBase(FILE* handle) noexcept :
-                FileViewStreamBase(handle) {}
-
         public:
-            FileStreamBase() = default;
             FileStreamBase(const FileStreamBase&) = delete;
-            
-            FileStreamBase(FileStreamBase&& obj) noexcept {
-                this->handle    = obj.handle;
+            FileStreamBase(FileStreamBase&& obj) noexcept :
+                FileViewStreamBase(obj.handle)
+            {
                 obj.handle      = nullptr;
             }
 
-            auto&
+            FileStreamBase&
+            operator=(const FileStreamBase&) = delete;
+            FileStreamBase&
             operator=(FileStreamBase&& obj) noexcept {
                 FileStreamBase
                     temp    = std::move(obj);
@@ -125,10 +120,9 @@ namespace io {
                 return *this;
             }
 
-            FileStreamBase(std::string_view strvFilename, std::string_view strvMode) {
-                this->handle    = fopen(
-                                    strvFilename.data(),
-                                    strvMode.data());
+            FileStreamBase(std::string_view strvFilename, std::string_view strvMode) :
+                FileViewStreamBase(fopen(strvFilename.data(), strvMode.data()))
+            {
                 if (this->handle == nullptr) {
                     throw std::runtime_error(std::format(
                         "failed to open file {} with mode {}",
@@ -146,9 +140,6 @@ namespace io {
     class IFileViewStream :
         public  IStream,
         public  __impl::FileViewStreamBase {
-    protected:
-        IFileViewStream() = default;
-
     public:
         IFileViewStream(FILE* handle) :
             FileViewStreamBase(handle) {}
@@ -172,9 +163,6 @@ namespace io {
     class OFileViewStream :
         public  OStream,
         public  __impl::FileViewStreamBase {
-    protected:
-        OFileViewStream() = default;
-
     public:
         OFileViewStream(FILE* handle) :
             FileViewStreamBase(handle) {}
@@ -226,9 +214,6 @@ namespace io {
     class IFileStream :
         public  IStream,
         public  __impl::FileStreamBase {
-    protected:
-        IFileStream() = default;
-
     public:
         IFileStream(std::string_view strvFilename) :
             FileStreamBase(strvFilename, "r") {}
@@ -252,9 +237,6 @@ namespace io {
     class OFileStream :
         public  OStream,
         public  __impl::FileStreamBase {
-    protected:
-        OFileStream() = default;
-
     public:
         OFileStream(std::string_view strvFilename) :
             FileStreamBase(strvFilename, "w") {}
