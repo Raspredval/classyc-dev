@@ -1,52 +1,231 @@
 #pragma once
-#include "CFile.hpp"
+#include <cstdio>
+#include <format>
+#include <stdexcept>
+#include <string_view>
+
+#include "IOStreams.hpp"
+
 
 namespace io {
     namespace __impl {
-        class FileStreamBase :
+        class FileViewStreamBase :
             virtual public  StreamState,
-            virtual public  StreamPosition,
-            protected       CFile {
+            virtual public  StreamPosition {
         public:
-            FileStreamBase() = default;
-            FileStreamBase(std::string_view strvFilename, std::string_view strvMode) :
-                CFile(strvFilename, strvMode) {}
+            FileViewStreamBase() = default;
 
-            bool
+            FileViewStreamBase(FILE* handle) :
+                handle(handle) {}
+
+            [[nodiscard]] bool
             EndOfStream() const noexcept override {
-                return this->CFile::EndOfStream();
+                return feof(this->handle);
             }
 
-            bool
+            [[nodiscard]] bool
             Good() const noexcept override {
-                return !this->CFile::Bad();
+                return !ferror(this->handle);
             }
 
-            intptr_t
+            void
+            ClearFlags() noexcept override {
+                return clearerr(this->handle);
+            }
+
+            [[nodiscard]] intptr_t
             GetPosition() const noexcept override {
-                return this->CFile::GetPosition();
+                return ftell(this->handle);
             }
 
             bool
-            SetPosition(intptr_t offset, StreamOffsetOrigin from = StreamOffsetOrigin::StreamStart) override {
-                return this->CFile::SetPosition(offset, from);
+            SetPosition(
+                intptr_t             offset,
+                StreamOffsetOrigin  from = StreamOffsetOrigin::StreamStart) override
+            {
+                return !fseek(
+                    this->handle,
+                    offset,
+                    (int)from);
+            }
+
+            [[nodiscard]] FILE*
+            Handle() const noexcept {
+                return this->handle;
             }
 
             bool
             Flush() {
-                return this->CFile::Flush();
+                return !fflush(this->handle);
+            }
+
+        protected:
+            std::optional<std::byte>
+            Read() {
+                auto c =
+                    fgetc(this->handle);
+                return (c != EOF)
+                    ? std::optional{ (std::byte)c }
+                    : std::nullopt;
+            }
+
+            size_t
+            ReadSome(std::span<std::byte> buffer) {
+                return fread(
+                    buffer.data(),
+                    1, buffer.size(),
+                    this->handle);
+            }
+
+            bool
+            Write(std::byte c) {
+                auto result =
+                    fputc((int)c, this->handle);
+                return result != EOF;
+            }
+
+            size_t
+            WriteSome(std::span<const std::byte> buffer) {
+                return fwrite(
+                    buffer.data(),
+                    1, buffer.size(),
+                    this->handle);
+            }
+
+            bool
+            PutBack(std::byte c) {
+                return ungetc((int)c, this->handle) != EOF;
             }
 
             FILE*
-            FileHandle() const noexcept {
-                return this->CFile::Handle();
+                handle = nullptr;
+        };
+
+        class FileStreamBase :
+            public FileViewStreamBase {
+        private:
+            FileStreamBase(FILE* handle) noexcept :
+                FileViewStreamBase(handle) {}
+
+        public:
+            FileStreamBase() = default;
+            FileStreamBase(const FileStreamBase&) = delete;
+            
+            FileStreamBase(FileStreamBase&& obj) noexcept {
+                this->handle    = obj.handle;
+                obj.handle      = nullptr;
+            }
+
+            auto&
+            operator=(FileStreamBase&& obj) noexcept {
+                FileStreamBase
+                    temp    = std::move(obj);
+                std::swap(
+                    this->handle, temp.handle);
+                return *this;
+            }
+
+            FileStreamBase(std::string_view strvFilename, std::string_view strvMode) {
+                this->handle    = fopen(
+                                    strvFilename.data(),
+                                    strvMode.data());
+                if (this->handle == nullptr) {
+                    throw std::runtime_error(std::format(
+                        "failed to open file {} with mode {}",
+                        strvFilename, strvMode));
+                }
+            }
+
+            ~FileStreamBase() noexcept {
+                if (this->handle != nullptr)
+                    fclose(this->handle);
             }
         };
     }
 
+    class IFileViewStream :
+        public  IStream,
+        public  __impl::FileViewStreamBase {
+    protected:
+        IFileViewStream() = default;
+
+    public:
+        IFileViewStream(FILE* handle) :
+            FileViewStreamBase(handle) {}
+        
+        std::optional<std::byte>
+        Read() override {
+            return this->FileViewStreamBase::Read();
+        }
+
+        size_t
+        ReadSome(std::span<std::byte> buffer) override {
+            return this->FileViewStreamBase::ReadSome(buffer);
+        }
+
+        bool
+        PutBack(std::byte c) override {
+            return this->FileViewStreamBase::PutBack(c);
+        }
+    };
+
+    class OFileViewStream :
+        public  OStream,
+        public  __impl::FileViewStreamBase {
+    protected:
+        OFileViewStream() = default;
+
+    public:
+        OFileViewStream(FILE* handle) :
+            FileViewStreamBase(handle) {}
+        
+        bool
+        Write(std::byte c) override {
+            return this->FileViewStreamBase::Write(c);
+        }
+
+        size_t
+        WriteSome(std::span<const std::byte> buffer) override {
+            return this->FileViewStreamBase::WriteSome(buffer);
+        }
+    };
+
+    class IOFileViewStream :
+        public  IOStream,
+        public  __impl::FileViewStreamBase {
+    public:
+        IOFileViewStream(FILE* handle) :
+            FileViewStreamBase(handle) {}
+
+        std::optional<std::byte>
+        Read() override {
+            return this->FileViewStreamBase::Read();
+        }
+
+        size_t
+        ReadSome(std::span<std::byte> buffer) override {
+            return this->FileViewStreamBase::ReadSome(buffer);
+        }
+
+        bool
+        PutBack(std::byte c) override {
+            return this->FileViewStreamBase::PutBack(c);
+        }
+
+        bool
+        Write(std::byte c) override {
+            return this->FileViewStreamBase::Write(c);
+        }
+
+        size_t
+        WriteSome(std::span<const std::byte> buffer) override {
+            return this->FileViewStreamBase::WriteSome(buffer);
+        }
+    };
+
     class IFileStream :
-        public              IStream,
-        virtual public      __impl::FileStreamBase {
+        public  IStream,
+        public  __impl::FileStreamBase {
     protected:
         IFileStream() = default;
 
@@ -56,23 +235,23 @@ namespace io {
 
         std::optional<std::byte>
         Read() override {
-            return this->CFile::Read();
+            return this->FileStreamBase::Read();
         }
 
         size_t
         ReadSome(std::span<std::byte> buffer) override {
-            return this->CFile::ReadSome(buffer);
+            return this->FileStreamBase::ReadSome(buffer);
         }
 
         bool
         PutBack(std::byte c) override {
-            return this->CFile::PutBack(c);
+            return this->FileStreamBase::PutBack(c);
         }
     };
 
     class OFileStream :
-        public              OStream,
-        virtual public      __impl::FileStreamBase {
+        public  OStream,
+        public  __impl::FileStreamBase {
     protected:
         OFileStream() = default;
 
@@ -82,45 +261,45 @@ namespace io {
 
         bool
         Write(std::byte c) override {
-            return this->CFile::Write(c);
+            return this->FileStreamBase::Write(c);
         }
 
         size_t
         WriteSome(std::span<const std::byte> buffer) override {
-            return this->CFile::WriteSome(buffer);
+            return this->FileStreamBase::WriteSome(buffer);
         }
     };
 
     class IOFileStream :
-        public          IOStream,
-        virtual public  __impl::FileStreamBase {
+        public  IOStream,
+        public  __impl::FileStreamBase {
     public:
         IOFileStream(std::string_view strvFilename) :
             FileStreamBase(strvFilename, "r+") {}
 
         bool
         Write(std::byte c) override {
-            return this->CFile::Write(c);
+            return this->FileStreamBase::Write(c);
         }
 
         size_t
         WriteSome(std::span<const std::byte> buffer) override {
-            return this->CFile::WriteSome(buffer);
+            return this->FileStreamBase::WriteSome(buffer);
         }
 
         std::optional<std::byte>
         Read() override {
-            return this->CFile::Read();
+            return this->FileStreamBase::Read();
         }
 
         size_t
         ReadSome(std::span<std::byte> buffer) override {
-            return this->CFile::ReadSome(buffer);
+            return this->FileStreamBase::ReadSome(buffer);
         }
 
         bool
         PutBack(std::byte c) override {
-            return this->CFile::PutBack(c);
+            return this->FileStreamBase::PutBack(c);
         }
     };
 }
