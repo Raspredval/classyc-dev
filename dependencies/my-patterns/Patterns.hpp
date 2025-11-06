@@ -486,62 +486,44 @@ namespace patt {
             return std::make_shared<RepeatExactPattern>(lhs, rhs);
         }
 
-        template<typename T>
-        concept StringLike =
-            std::constructible_from<std::string, T>;
-
         using MapPatterns =
             std::map<std::string, patt::Pattern>;
 
         class Grammar {
         private:
-            class ConstAccessor {
+            class Accessor {
             public:
-                template<StringLike T>
-                ConstAccessor(const std::shared_ptr<MapPatterns>& sptrPatterns, T&& key) :
-                    strKey(std::forward<T>(key)),
-                    sptrPatterns(sptrPatterns) {}
+                Accessor(MapPatterns& mapPatterns, const std::string& strKey) {
+                    auto
+                        it  = mapPatterns.find(strKey);
+                    if (it == mapPatterns.end())
+                        it  = mapPatterns.emplace(strKey, nullptr).first;
+                    this->itPattern = it;
+                }
 
                 [[nodiscard]]
                 operator patt::Pattern() &&;
 
-            protected:
-                std::string
-                    strKey;
-                std::shared_ptr<MapPatterns>
-                    sptrPatterns;
-            };
-
-            class Accessor :
-                public ConstAccessor {
-            public:
-                template<StringLike T>
-                Accessor(const std::shared_ptr<MapPatterns>& sptrPatterns, T&& key) :
-                    ConstAccessor(sptrPatterns, std::forward<T>(key)) {}
-
                 patt::Pattern&
                 operator=(const patt::Pattern& pattern) && {
-                    return (*this->sptrPatterns)[this->strKey] = pattern;
+                    return this->itPattern->second = pattern;
                 }
+            private:
+                MapPatterns::iterator
+                    itPattern;
             };
             
         public:
-            Grammar() :
-                sptrPatterns(std::make_shared<MapPatterns>()) {}
-
-            Grammar(const Grammar& obj) :
-                sptrPatterns(obj.sptrPatterns) {}
-            
-            Grammar(Grammar&& obj) noexcept :
-                sptrPatterns(std::move(obj.sptrPatterns)) {}
+            Grammar() = default;
+            Grammar(const Grammar& obj) = default;
+            Grammar(Grammar&& obj) noexcept = default;
 
             auto&
             operator=(const Grammar& obj) {
                 Grammar
                     temp    = obj;
-                std::swap(
-                    this->sptrPatterns,
-                    temp.sptrPatterns);
+                this->mapPatterns.swap(
+                    temp.mapPatterns);
                 return *this;
             }
 
@@ -549,36 +531,26 @@ namespace patt {
             operator=(Grammar&& obj) noexcept {
                 Grammar
                     temp    = std::move(obj);
-                std::swap(
-                    this->sptrPatterns,
-                    temp.sptrPatterns);
+                this->mapPatterns.swap(
+                    temp.mapPatterns);
                 return *this;
             }
 
-            template<StringLike T>
-            ConstAccessor
-            operator[](T&& key) const {
-                return ConstAccessor(this->sptrPatterns, std::forward<T>(key));
-            }
-
-            template<StringLike T>
             Accessor
-            operator[](T&& key) {
-                return Accessor(this->sptrPatterns, std::forward<T>(key));
+            operator[](const std::string& strKey) {
+                return Accessor(this->mapPatterns, strKey);
             }
 
         private:
-            std::shared_ptr<MapPatterns>
-                sptrPatterns;
+            MapPatterns
+                mapPatterns;
         };
 
         class GrammarPattern :
             public Pattern {
         public:
-            template<typename T> requires
-                std::constructible_from<std::string, T>
-            GrammarPattern(const std::shared_ptr<MapPatterns>& sptrPatterns, T&& key) :
-                sptrPatterns(sptrPatterns), strKey(std::forward<T>(key)) {}
+            GrammarPattern(MapPatterns::iterator itPattern) :
+                itPattern(itPattern) {}
 
             [[nodiscard]]
             patt::Pattern
@@ -589,18 +561,20 @@ namespace patt {
         private:
             std::optional<Match>
             normEval(io::IStream& is) const noexcept override {
-                return (*this->sptrPatterns)[this->strKey]->Eval(is);
+                const patt::Pattern&
+                    pattern = this->itPattern->second;
+                if (pattern == nullptr)
+                    return std::nullopt;
+                return pattern->Eval(is);
             }
 
-            std::shared_ptr<MapPatterns>
-                sptrPatterns;
-            std::string
-                strKey;
+            MapPatterns::iterator
+                itPattern = {};
         };
 
-        inline Grammar::ConstAccessor::operator patt::Pattern() && {
+        inline Grammar::Accessor::operator patt::Pattern() && {
             return std::make_shared<GrammarPattern>(
-                this->sptrPatterns, std::move(this->strKey));
+                this->itPattern);
         }
 
         class CapturePattern :
