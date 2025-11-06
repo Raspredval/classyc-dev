@@ -1,5 +1,5 @@
 #pragma once
-#include "FileViewStreams.hpp"
+#include "FileStreams.hpp"
 #include "TextIO.hpp"
 
 namespace io {
