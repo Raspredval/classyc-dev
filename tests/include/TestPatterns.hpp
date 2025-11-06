@@ -21,7 +21,7 @@ TestPatterns() {
     io::IOBufferStream
         buffTest;
     io::TextIO(buffTest)
-        .put_str("std.chrono.duration")
+        .put_str("std::chrono::duration")
         .go_start();
 
     patt::Grammar
@@ -31,10 +31,12 @@ TestPatterns() {
 
     std::vector<std::string>
         vecNames;
-    gr["name"]      = ptID / vecNames >> (patt::Str(".") >> gr["name"]) % -1;
+    gr["name"]      = ptID / vecNames >> (patt::Str("::") >> gr["name"]) % -1;
 
+    patt::Pattern
+        ptFullName  = gr["name"] >> patt::None();
     auto
-        optMatch    = patt::Eval(gr["name"], buffTest);
+        optMatch    = ptFullName->Eval(buffTest);
     if (optMatch) {
         io::cout.fmt("name parts:\n");
         for (const auto& strName : vecNames) {
