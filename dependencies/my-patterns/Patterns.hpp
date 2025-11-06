@@ -783,7 +783,7 @@ namespace patt {
 
     [[nodiscard]]
     inline Pattern
-    Space() {
+    SpaceOrNewLine() {
         return std::make_shared<__impl::LocalePattern>(isspace);
     }
 
