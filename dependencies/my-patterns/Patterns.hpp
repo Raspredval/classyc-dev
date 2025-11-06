@@ -789,6 +789,23 @@ namespace patt {
 
     [[nodiscard]]
     inline Pattern
+    Space() {
+        return std::make_shared<__impl::LocalePattern>(
+            [] (int c) -> int {
+                switch (c) {
+                case ' ':
+                case '\t':
+                case '\v':
+                    return true;
+
+                default:
+                    return false;
+                }
+            });
+    }
+
+    [[nodiscard]]
+    inline Pattern
     Blank() {
         return std::make_shared<__impl::LocalePattern>(isblank);
     }
