@@ -1,3 +1,5 @@
+Space:
+    " " |= "\t"
 Endl:
     ("\n" |= "\r\n" |= None) / $fnCountLines;
 Spacing:
