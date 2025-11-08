@@ -1,4 +1,5 @@
 #pragma once
+#include "my-iostreams/IOStreams.hpp"
 #include <string>
 #include <vector>
 
@@ -28,15 +29,20 @@ TestPatterns() {
         gr;
     patt::Pattern
         ptID        = (patt::Str("_") |= patt::Alpha()) >> (patt::Str("_") |= patt::Alnum()) % 1;
+    auto
+        fnUsrValEcho=
+            [] (io::IStream&, const std::optional<patt::Match>&, intptr_t iUserValue) {
+                io::cout.fmt("The user value is {}\n", iUserValue);
+            };
 
     std::vector<std::string>
         vecNames;
-    gr["name"]      = ptID / vecNames >> (patt::Str("::") >> gr["name"]) % -1;
+    gr["name"]      = ptID / vecNames / fnUsrValEcho >> (patt::Str("::") >> gr["name"]) % -1;
 
     patt::Pattern
         ptFullName  = gr["name"] >> patt::None();
     auto
-        optMatch    = ptFullName->Eval(buffTest);
+        optMatch    = ptFullName->Eval(buffTest, 69'420);
     if (optMatch) {
         io::cout.fmt("name parts:\n");
         for (const auto& strName : vecNames) {
