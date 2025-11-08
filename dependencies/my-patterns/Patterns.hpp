@@ -1,6 +1,5 @@
 #pragma once
 #include <map>
-#include <array>
 #include <memory>
 #include <string>
 #include <optional>
@@ -255,7 +254,7 @@ namespace patt {
             public  Pattern {
         public:
             ChoicePattern(const patt::Pattern& lhs, const patt::Pattern& rhs) :
-                arrPatterns{lhs, rhs} {}
+                lhs(lhs), rhs(rhs) {}
         
             [[nodiscard]]
             patt::Pattern
@@ -267,26 +266,32 @@ namespace patt {
             std::optional<Match>
             normEval(io::IStream& is, intptr_t iUserData) const noexcept override {
                 intptr_t
-                    iBegin  = is.GetPosition();
+                    iBegin      = is.GetPosition(),
+                    iEnd        = iBegin;
+                std::optional<Match>
+                    optMatch    = std::nullopt;
                 
-                for (const patt::Pattern& pattern : this->arrPatterns) {
-                    auto
-                        optMatch    = pattern->Eval(is, iUserData);
-                    if (!optMatch) {
-                        is.SetPosition(iBegin);
-                        continue;
-                    }
-
-                    intptr_t
-                        iEnd    = is.GetPosition();
+                optMatch        = this->lhs->Eval(is, iUserData);
+                if (optMatch) {
+                    iEnd            = is.GetPosition();
                     return Match{ iBegin, iEnd };
                 }
+                else
+                    is.SetPosition(iBegin);
 
-                return std::nullopt;
+                optMatch        = this->rhs->Eval(is, iUserData);
+                if (optMatch) {
+                    iEnd            = is.GetPosition();
+                    return Match{ iBegin, iEnd };
+                }
+                else {
+                    is.SetPosition(iBegin);
+                    return std::nullopt;
+                }
             }
 
-            std::array<patt::Pattern, 2>
-                arrPatterns;
+            patt::Pattern
+                lhs, rhs;
         };
 
         // ordered choice
