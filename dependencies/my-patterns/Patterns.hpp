@@ -266,22 +266,22 @@ namespace patt {
             std::optional<Match>
             normEval(io::IStream& is, intptr_t iUserData) const noexcept override {
                 intptr_t
-                    iBegin      = is.GetPosition(),
-                    iEnd        = iBegin;
+                    iBegin      = is.GetPosition();
                 std::optional<Match>
-                    optMatch    = std::nullopt;
+                    optMatch    = this->lhs->Eval(is, iUserData);
                 
-                optMatch        = this->lhs->Eval(is, iUserData);
                 if (optMatch) {
-                    iEnd            = is.GetPosition();
+                    intptr_t
+                        iEnd    = is.GetPosition();
                     return Match{ iBegin, iEnd };
                 }
                 else
                     is.SetPosition(iBegin);
-
+                
                 optMatch        = this->rhs->Eval(is, iUserData);
                 if (optMatch) {
-                    iEnd            = is.GetPosition();
+                    intptr_t
+                        iEnd    = is.GetPosition();
                     return Match{ iBegin, iEnd };
                 }
                 else {
