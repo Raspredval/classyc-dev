@@ -342,7 +342,7 @@ namespace patt {
             public Pattern {
         public:
             using LocaleProc =
-                int (&)(int);
+                int (*)(int);
 
             LocalePattern(LocaleProc lpfn) :
                 lpfn(lpfn) {}
