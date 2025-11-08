@@ -1,58 +1,95 @@
 #pragma once
-#include "my-iostreams/IOStreams.hpp"
-#include <string>
-#include <vector>
-
 #include <my-iostreams/ConsoleStreams.hpp>
 #include <my-iostreams/BufferStreams.hpp>
 #include <my-iostreams/FileStreams.hpp>
 #include <my-iostreams/TextIO.hpp>
 #include <my-patterns/Patterns.hpp>
 
-
-struct MacroArgs {
-    std::string
-        strName, strValue;
-};
-
 inline int
 TestPatterns() {
     io::cout.put("Testing Patterns:\n");
 
+    const patt::Pattern
+        ptSpacing       = patt::Space() % 1,
+        ptOptSpacing    = patt::Space() % 0;
+    const patt::Pattern
+        ptIdentifier    =
+            (patt::Alpha() |= patt::Str("_")) >>
+            (patt::Alnum() |= patt::Str("_")) % 0;
+    const patt::Pattern
+        ptStringLiteral =
+            patt::Str("\"") >>
+                ((patt::Str("\\") |= -patt::Str("\"")) >> patt::Any()) % 0 >>
+            patt::Str("\""),
+        ptCharLiteral   =
+            patt::Str("\'") >>
+                (patt::Str("\\") |= -patt::Str("\'")) >> patt::Any() >>
+            patt::Str("\'");
+
     io::IOBufferStream
         buffTest;
-    io::TextIO(buffTest)
-        .put_str("std::chrono::duration")
+    io::TextOutput(buffTest)
+        .put("\"some string with a new line \\n\"")
         .go_start();
 
-    patt::Grammar
-        gr;
-    patt::Pattern
-        ptID        = (patt::Str("_") |= patt::Alpha()) >> (patt::Str("_") |= patt::Alnum()) % 1;
-    auto
-        fnUsrValEcho=
-            [] (io::IStream&, const std::optional<patt::Match>&, intptr_t iUserValue) {
-                io::cout.fmt("The user value is {}\n", iUserValue);
-            };
-
-    std::vector<std::string>
-        vecNames;
-    gr["name"]      = ptID / vecNames / fnUsrValEcho >> (patt::Str("::") >> gr["name"]) % -1;
-
-    patt::Pattern
-        ptFullName  = gr["name"] >> patt::None();
-    auto
-        optMatch    = ptFullName->Eval(buffTest, 69'420);
-    if (optMatch) {
-        io::cout.fmt("name parts:\n");
-        for (const auto& strName : vecNames) {
-            io::cout.fmt("\t{}\n", strName);
+    {
+        auto
+            optmStrLiteral  = ptStringLiteral->Eval(buffTest);
+        if (!optmStrLiteral) {
+            io::cerr.put("failed to match string literal\n");
+            return EXIT_FAILURE;
         }
 
-        return EXIT_SUCCESS;
+        io::cout.fmt("matched valid string literal: {}\n", optmStrLiteral->GetString(buffTest));
     }
-    else {
-        io::cerr.put_str("failed to parse full name\n");
-        return EXIT_FAILURE;
+
+    buffTest.ClearBuffer();
+    io::TextOutput(buffTest)
+        .put("\'\\n\'")
+        .go_start();
+
+    {
+        auto
+            optmCharLiteral = ptCharLiteral->Eval(buffTest);
+        if (!optmCharLiteral) {
+            io::cerr.put("failed to match char literal\n");
+            return EXIT_FAILURE;
+        }
+
+        io::cout.fmt("matched valid literal: {}\n", optmCharLiteral->GetString(buffTest));
     }
+
+    buffTest.ClearBuffer();
+    io::TextOutput(buffTest)
+        .put("\'\\long char literal\'")
+        .go_start();
+
+    {
+        auto
+            optmInvalidChar = ptCharLiteral->Eval(buffTest);
+        if (optmInvalidChar) {
+            io::cerr.put("matched invalid char literal\n");
+            return EXIT_FAILURE;
+        }
+
+        io::cout.fmt("failed to match incorrect char literal\n");
+    }
+
+    buffTest.ClearBuffer();
+    io::TextOutput(buffTest)
+        .put("\'\'")
+        .go_start();
+    
+    {
+        auto
+            optmEmptyChar   = ptCharLiteral->Eval(buffTest);
+        if (optmEmptyChar) {
+            io::cerr.put("matched empty char literal\n");
+            return EXIT_FAILURE;
+        }
+
+        io::cout.fmt("failed to match empty char literal\n");
+    }
+
+    return EXIT_SUCCESS;
 }
