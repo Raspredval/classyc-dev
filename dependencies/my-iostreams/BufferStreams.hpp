@@ -6,13 +6,13 @@
 
 
 namespace io {
-    class BufferStreamBase :
+    class IOBufferStream :
         virtual public  __impl::StreamState,
         virtual public  __impl::StreamPosition,
         public io::IOStream {
     public:
-        BufferStreamBase() = default;
-        BufferStreamBase(std::span<const std::byte> buffer) :
+        IOBufferStream() = default;
+        IOBufferStream(std::span<const std::byte> buffer) :
             deqBuffer(std::from_range, buffer) {}
         
         bool
