@@ -1,2 +1,10 @@
-#define NAME    PETE
-#define AGE     12
+// $NAME and $AGE
+#define NAME   Pete
+#define AGE    12
+
+// redefine $AGE
+#undef  AGE
+#define AGE    16
+
+// print $NAME and $AGE
+print("Name:\t{}\nAge:\t{}\n", $NAME, $AGE)
