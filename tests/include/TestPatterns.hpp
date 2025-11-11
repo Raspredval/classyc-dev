@@ -5,8 +5,15 @@
 #include <my-iostreams/TextIO.hpp>
 #include <my-patterns/Patterns.hpp>
 
-using MacroConstants =
-    std::map<std::string, std::string>;
+struct PPState {
+    std::map<std::string, std::string>
+        mapGlobalMacros;
+    std::string
+        strMacroName,
+        strMacroValue;
+    std::vector<std::string>
+        vecMacroArgs;
+};
 
 inline int
 TestPatterns() {
@@ -14,10 +21,8 @@ TestPatterns() {
 
     const patt::Pattern
         ptSpacing       = patt::Space() % 1,
-        ptOptSpacing    = patt::Space() % 0;
-    const patt::Pattern
-        ptEndOfLine     = patt::None() |= patt::Str("\n");
-    const patt::Pattern
+        ptOptSpacing    = patt::Space() % 0,
+        ptEndOfLine     = patt::None() |= patt::Str("\n"),
         ptIdentifier    =
             (patt::Alpha() |= patt::Str("_")) >>
             (patt::Alnum() |= patt::Str("_")) % 0;
@@ -29,51 +34,80 @@ TestPatterns() {
         ptCharLiteral   =
             patt::Str("\'") >>
                 (patt::Str("\\") |= -patt::Str("\'")) >> patt::Any() >>
-            patt::Str("\'");
+            patt::Str("\'"),
+        ptLineComment   =
+            patt::Str("//") >> (-ptEndOfLine >> patt::Any()) % 0 >> ptEndOfLine;
+    
+    auto
+        fnCaptureName   =
+            [] (io::IStream& is, const patt::OptMatch& optMatch, intptr_t iUserValue) {
+                if (optMatch) {
+                    auto* s = (PPState*)iUserValue;
+                    s->strMacroName     = optMatch->GetString(is);
+                }
+                else
+                    throw std::runtime_error("expected an identifier");
+            };
+    auto
+        fnCaptureValue  =
+            [] (io::IStream& is, const patt::OptMatch& optMatch, intptr_t iUserValue) {
+                if (optMatch) {
+                    auto* s = (PPState*)iUserValue;
+                    s->strMacroValue    = optMatch->GetString(is);
+                }
+                else
+                    throw std::runtime_error("failed to parse macro value");
+            };
+    auto
+        fnExpandMacro   =
+            [] (io::IStream&, const patt::OptMatch& optMatch, intptr_t iUserValue) {
+                if (optMatch) {
+                    auto* s = (PPState*)iUserValue;
 
-    std::string
-        strMacroName,
-        strMacroValue;
+                    // TODO: expand macro here
+                    // io::IOBufferStream
+                    //    buff;
+                    // optMatch->Forward(is, buff);
+                    io::cout.fmt("found macro ${}\n", s->strMacroName);
+                }
+            };
+    
     const patt::Pattern
-        ptCmdDefine     =
-            patt::Str("define") >> ptSpacing >>
-            ptIdentifier / strMacroName >> ptSpacing >>
-            ((-ptEndOfLine >> patt::Any()) % 1) / strMacroValue >> ptEndOfLine;
-    const patt::Pattern
-        ptCmdUndef      =
-            patt::Str("undef") >> ptSpacing >>
-            ptIdentifier / strMacroName >> ptEndOfLine;
+        ptMacro         = (patt::Str("$") >> ptIdentifier / fnCaptureName) / fnExpandMacro;
     
     auto
         fnHandleDefine  =
-            [&strMacroName, &strMacroValue]
-            (io::IStream& is, const std::optional<patt::Match>& optMatch, intptr_t iUserValue) {
-                MacroConstants*
-                    lpMacroConstants    = (MacroConstants*)iUserValue;
+            [] (io::IStream& is, const patt::OptMatch& optMatch, intptr_t iUserValue) {
                 if (optMatch) {
+                    auto* s = (PPState*)iUserValue;
                     std::string
                         strMatch    = optMatch->GetString(is);
                     if (strMatch.ends_with('\n'))
                         strMatch.pop_back();
                     io::cout.fmt("matched: {}\n", strMatch);
 
-                    if (lpMacroConstants->contains(strMacroName)) {
+                    if (s->mapGlobalMacros.contains(s->strMacroName)) {
                         throw std::runtime_error(
-                            std::format("cannot redefine macro {}", strMacroName));
+                            std::format("cannot redefine macro {}", s->strMacroName));
                     }
 
-                    lpMacroConstants->emplace(
-                        std::move(strMacroName),
-                        std::move(strMacroValue));
+                    s->mapGlobalMacros.emplace(
+                        std::move(s->strMacroName),
+                        std::move(s->strMacroValue));
                 }
             };
+    const patt::Pattern
+        ptCmdDefine     = (
+            patt::Str("define") >> ptSpacing >>
+            ptIdentifier / fnCaptureName >> ptSpacing >>
+            ((-ptEndOfLine >> patt::Any()) % 1) / fnCaptureValue >>
+            ptEndOfLine) / fnHandleDefine;
+
     auto
         fnHandleUndef   =
-            [&strMacroName]
-            (io::IStream& is, const std::optional<patt::Match>& optMatch, intptr_t iUserValue) {
-                MacroConstants*
-                    lpMacroConstants    = (MacroConstants*)iUserValue;
+            [] (io::IStream& is, const std::optional<patt::Match>& optMatch, intptr_t iUserValue) {
                 if (optMatch) {
+                    auto* s = (PPState*)iUserValue;
                     std::string
                         strMatch    = optMatch->GetString(is);
                     if (strMatch.ends_with('\n'))
@@ -81,15 +115,21 @@ TestPatterns() {
                     io::cout.fmt("matched: {}\n", strMatch);
                     
                     auto
-                        itMacro     = lpMacroConstants->find(strMacroName);
-                    if (itMacro == lpMacroConstants->end()) {
+                        itMacro     = s->mapGlobalMacros.find(s->strMacroName);
+                    if (itMacro == s->mapGlobalMacros.end()) {
                         throw std::runtime_error(
-                            std::format("cannot undef nonexisting macro {}", strMacroName));
+                            std::format("cannot undef nonexisting macro {}", s->strMacroName));
                     }
 
-                    lpMacroConstants->erase(itMacro);
+                    s->mapGlobalMacros.erase(itMacro);
                 }
             };
+    const patt::Pattern
+        ptCmdUndef      = (
+            patt::Str("undef") >> ptSpacing >>
+            ptIdentifier / fnCaptureName >>
+            ptEndOfLine) / fnHandleUndef;
+
     auto
         fnHandleCommands    =
             [] (io::IStream&, const std::optional<patt::Match>& optMatch, intptr_t)  {
@@ -97,43 +137,41 @@ TestPatterns() {
                     throw std::runtime_error("unrecognized macro command");
                 }
             };
+    const patt::Pattern
+        ptMacroCommand      = 
+            patt::Str("#") >> (
+                ptCmdDefine |=
+                ptCmdUndef
+            ) / fnHandleCommands;
 
-    io::IOBufferStream
-        buffTest;
-    
-    io::TextOutput(buffTest)
-        .put(
-            "#define NAME   Pete\n"
-            "#define AGE    12\n"
-            "#undef  AGE\n"
-            "#define AGE    16")
-        .go_start();
+    const patt::Pattern
+        ptSourceText        =
+            (-patt::Str("#") >> -patt::Str("$") >> -patt::Str("\"") >> -patt::Str("\'") >> -patt::Str("//") >> patt::Any()) % 1;
+    const patt::Pattern
+        ptPreprocessor      = (
+            ptSourceText |= ptMacroCommand |= ptMacro |= ptStringLiteral |= ptCharLiteral |= ptLineComment
+        ) % 0 >> patt::None();
 
-    MacroConstants
-        mapConstants;
+    io::IFileStream
+        fileInput("./assets/input.txt");
+
+    PPState
+        state   = {};
     try {
-        while (!buffTest.EndOfStream()) {
-            auto
-                optMatch    = patt::Eval(
-                                patt::Str("#") >> (
-                                    ptCmdDefine / fnHandleDefine |=
-                                    ptCmdUndef / fnHandleUndef
-                                ) / fnHandleCommands,
-                                buffTest, (intptr_t)&mapConstants);
-            if (!optMatch)
-                io::cout.put("source code (probably)\n");
-        }
+        auto
+            optMatch    = patt::Eval(ptPreprocessor, fileInput, (intptr_t)&state);
+        if (!optMatch)
+            throw std::runtime_error("failed to parse input text");
         
         io::cout.put("Macro constants:\n");
-        for (const auto& [strKey, strValue] : mapConstants) {
+        for (const auto& [strKey, strValue] : state.mapGlobalMacros) {
             io::cout.fmt(" > {}: {}\n", strKey, strValue);
         }
     }
     catch (const std::exception& err) {
-        io::cerr.fmt("Error: {}\n", err.what());
+        io::cerr.fmt("[{}] Error: {}\n", fileInput.GetPosition(), err.what());
         return EXIT_FAILURE;
     }
-    
 
     return EXIT_SUCCESS;
 }
