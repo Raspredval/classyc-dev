@@ -2,10 +2,12 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <flat_set>
 #include <optional>
 #include <functional>
 
 #include <my-iostreams/IOStreams.hpp>
+#include <string_view>
 
 namespace patt {
     namespace __impl {
@@ -210,6 +212,39 @@ namespace patt {
 
             std::string
                 str;
+        };
+
+        class SetPattern :
+            public __impl::Pattern {
+        public:
+            SetPattern(std::string_view strvSet) {
+                for (char c : strvSet)
+                    this->setChars.emplace(c);
+            }
+
+            [[nodiscard]]
+            patt::Pattern
+            Clone() const override {
+                return std::make_shared<SetPattern>(*this);
+            }
+
+        private:
+            OptMatch
+            normEval(io::IStream& is, intptr_t) const noexcept override {
+                intptr_t
+                    iBegin  = is.GetPosition();
+                auto optc   = is.Read();
+                if (optc && this->setChars.contains((char)*optc)) {
+                    intptr_t
+                        iEnd    = is.GetPosition();
+                    return Match{ iBegin, iEnd };
+                }
+                else
+                    return std::nullopt;
+            }
+
+            std::flat_set<char>
+                setChars;
         };
 
         class ConcatPattern :
@@ -820,25 +855,20 @@ namespace patt {
 
     [[nodiscard]]
     inline Pattern
-    Space() {
-        return std::make_shared<__impl::LocalePattern>(
-            [] (int c) -> int {
-                switch (c) {
-                case ' ':
-                case '\t':
-                case '\v':
-                    return true;
-
-                default:
-                    return false;
-                }
-            });
+    Blank() {
+        return std::make_shared<__impl::LocalePattern>(isblank);
+    }
+    
+    [[nodiscard]]
+    inline Pattern
+    Set(std::string_view strvSet) {
+        return std::make_shared<__impl::SetPattern>(strvSet);
     }
 
     [[nodiscard]]
     inline Pattern
-    Blank() {
-        return std::make_shared<__impl::LocalePattern>(isblank);
+    Space() {
+        return Set(" \t\v");
     }
 
     [[nodiscard]]
