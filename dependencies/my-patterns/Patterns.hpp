@@ -97,6 +97,9 @@ namespace patt {
             iBegin, iEnd;
     };
 
+    using OptMatch =
+        std::optional<Match>;
+
     namespace __impl {
         class Pattern {
         public:
@@ -104,7 +107,7 @@ namespace patt {
             Pattern()               = default;
             virtual ~Pattern()      = default;
 
-            std::optional<Match>
+            OptMatch
             Eval(io::IStream& is, intptr_t iUserData = 0) const noexcept {
                 return (this->bNegated)
                     ? this->negEval(is, iUserData)
@@ -125,10 +128,10 @@ namespace patt {
             }
         
         protected:
-            virtual std::optional<Match>
+            virtual OptMatch
             normEval(io::IStream& is, intptr_t iUserData) const noexcept = 0;
 
-            virtual std::optional<Match>
+            virtual OptMatch
             negEval(io::IStream& is, intptr_t iUserData) const noexcept {
                 intptr_t
                     iCurr   = is.GetPosition();
@@ -166,7 +169,7 @@ namespace patt {
             }
 
         private:
-            std::optional<Match>
+            OptMatch
             normEval(io::IStream &is, intptr_t) const noexcept override {
                 intptr_t
                     iBegin  = is.GetPosition();
@@ -199,7 +202,7 @@ namespace patt {
             }
         
         private:
-            std::optional<Match>
+            OptMatch
             normEval(io::IStream& is, intptr_t iUserData) const noexcept override {
                 auto
                     optLhs  = this->lhs->Eval(is, iUserData);
@@ -236,7 +239,7 @@ namespace patt {
             }
         
         private:
-            std::optional<Match>
+            OptMatch
             normEval(io::IStream& is, intptr_t) const noexcept override {
                 intptr_t
                     iBegin  = is.GetPosition();
@@ -263,11 +266,11 @@ namespace patt {
             }
         
         private:
-            std::optional<Match>
+            OptMatch
             normEval(io::IStream& is, intptr_t iUserData) const noexcept override {
                 intptr_t
                     iBegin      = is.GetPosition();
-                std::optional<Match>
+                OptMatch
                     optMatch    = this->lhs->Eval(is, iUserData);
                 
                 if (optMatch) {
@@ -304,7 +307,7 @@ namespace patt {
             public Pattern {
         public:
             using Callback =
-                std::function<void(io::IStream&, const std::optional<Match>&, intptr_t)>;
+                std::function<void(io::IStream&, const OptMatch&, intptr_t)>;
 
             template<typename Fn> requires
                 std::is_constructible_v<Callback, Fn>
@@ -319,9 +322,9 @@ namespace patt {
             }
         
         private:
-            std::optional<Match>
+            OptMatch
             normEval(io::IStream& is, intptr_t iUserData) const noexcept override {
-                std::optional<Match>
+                OptMatch
                     optMatch    = this->pattern->Eval(is, iUserData);
                 this->fnCallback(is, optMatch, iUserData);
                 return optMatch;
@@ -359,7 +362,7 @@ namespace patt {
             }
         
         private:
-            std::optional<Match>
+            OptMatch
             normEval(io::IStream& is, intptr_t) const noexcept override {
                 intptr_t
                     iBegin  = is.GetPosition();
@@ -391,7 +394,7 @@ namespace patt {
             }
 
         private:
-            std::optional<Match>
+            OptMatch
             normEval(io::IStream& is, intptr_t iUserData) const noexcept override {
                 intptr_t
                     iBegin  = is.GetPosition();
@@ -414,7 +417,7 @@ namespace patt {
                 return Match{ iBegin, iCurr };
             }
 
-            std::optional<Match>
+            OptMatch
             negEval(io::IStream& is, intptr_t iUserData) const noexcept override {
                 intptr_t
                     iBegin  = is.GetPosition();
@@ -464,7 +467,7 @@ namespace patt {
             }
         
         private:
-            std::optional<Match>
+            OptMatch
             normEval(io::IStream& is, intptr_t iUserData) const noexcept override {
                 intptr_t
                     iBegin  = is.GetPosition();
@@ -564,7 +567,7 @@ namespace patt {
             }
 
         private:
-            std::optional<Match>
+            OptMatch
             normEval(io::IStream& is, intptr_t iUserData) const noexcept override {
                 const patt::Pattern&
                     pattern = this->itPattern->second;
@@ -594,7 +597,7 @@ namespace patt {
             }
 
         private:
-            std::optional<Match>
+            OptMatch
             normEval(io::IStream& is, intptr_t iUserData) const noexcept override {
                 auto
                     optMatch    = this->pattern->Eval(is, iUserData);
@@ -641,7 +644,7 @@ namespace patt {
             }
 
         private:
-            std::optional<Match>
+            OptMatch
             normEval(io::IStream& is, intptr_t iUserData) const noexcept override {
                 auto
                     optMatch    = this->pattern->Eval(is, iUserData);
@@ -678,7 +681,7 @@ namespace patt {
             }
             
         private:
-            std::optional<Match>
+            OptMatch
             normEval(io::IStream& is, intptr_t iUserData) const noexcept override {
                 auto
                     optMatch    = this->pattern->Eval(is, iUserData);
@@ -711,7 +714,7 @@ namespace patt {
             }
 
         private:
-            std::optional<Match>
+            OptMatch
             normEval(io::IStream& is, intptr_t iUserData) const noexcept override {
                 intptr_t
                     iCurr       = is.GetPosition();
@@ -816,7 +819,7 @@ namespace patt {
     }
 
     [[nodiscard]]
-    inline std::optional<Match>
+    inline OptMatch
     Eval(const Pattern& p, io::IStream& is, intptr_t iUserData = 0) noexcept {
         return p->Eval(is, iUserData);
     }
