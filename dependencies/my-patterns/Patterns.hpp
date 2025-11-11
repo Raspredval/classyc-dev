@@ -63,7 +63,7 @@ namespace patt {
         std::string
         GetString(io::IStream& is) const {
             intptr_t
-                iCurr   = is.GetPosition();
+                iCurr       = is.GetPosition();
             is.SetPosition(this->iBegin);
                 
             std::string
@@ -83,6 +83,29 @@ namespace patt {
 
             is.SetPosition(iCurr);
             return strMatch;
+        }
+
+        size_t
+        Forward(io::IStream& from, io::OStream& to) const {
+            intptr_t
+                iCurr       = from.GetPosition();
+            from.SetPosition(this->iBegin);
+
+            size_t
+                uMatchLen   = this->Length(),
+                uCharCount  = 0;
+            while (uCharCount != uMatchLen) {
+                std::optional<std::byte>
+                    optc    = from.Read();
+                if (!optc)
+                    break;
+
+                to.Write(*optc);
+                uCharCount  += 1;
+            }
+
+            from.SetPosition(iCurr);
+            return uCharCount;
         }
 
         auto&
