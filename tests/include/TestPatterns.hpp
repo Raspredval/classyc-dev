@@ -9,36 +9,20 @@
 #include <format>
 #include <any>
 
-struct InputSource {
+struct SourceLocation {
     std::string
-        strDescr;
-    std::shared_ptr<io::IStream>
-        sptrInput;
-    std::flat_set<intptr_t>
-        setNewLines;
-
+        strFrom;
     intptr_t
-    CurLine() {
-        return (intptr_t)this->setNewLines.size() + 1;
-    }
-
-    intptr_t
-    CurColumn() {
-        intptr_t
-            iLastLF = (!this->setNewLines.empty())
-                ? *(this->setNewLines.cend() - 1)
-                : 0;
-        return this->sptrInput->GetPosition() - iLastLF + 1;
-    }
+        iLine, iColumn;
 
     template<typename... Args>
     [[noreturn]] void
     Error(const std::format_string<Args...>& strfmt, Args&&... args) {
         std::string
             strMessage  = std::format("[{}: Ln {}, Col {}]\n > 🚫 Error: {} 🚫\n",
-                            this->strDescr,
-                            this->CurLine(),
-                            this->CurColumn(),
+                            this->strFrom,
+                            this->iLine,
+                            this->iColumn,
                             std::format(strfmt, std::forward<Args>(args)...));
         throw std::runtime_error(strMessage);
     }
@@ -48,9 +32,9 @@ struct InputSource {
     Warning(const std::format_string<Args...>& strfmt, Args&&... args) {
         std::string
             strMessage  = std::format("[{}: Ln {}, Col {}]\n > ⚠️ Warning: {} ⚠️\n",
-                            this->strDescr,
-                            this->CurLine(),
-                            this->CurColumn(),
+                            this->strFrom,
+                            this->iLine,
+                            this->iColumn,
                             std::format(strfmt, std::forward<Args>(args)...));
         io::cerr.put(strMessage);
     }
@@ -60,11 +44,43 @@ struct InputSource {
     Message(const std::format_string<Args...>& strfmt, Args&&... args) {
         std::string
             strMessage  = std::format("[{}: Ln {}, Col {}]\n > 📨 {}\n",
-                            this->strDescr,
-                            this->CurLine(),
-                            this->CurColumn(),
+                            this->strFrom,
+                            this->iLine,
+                            this->iColumn,
                             std::format(strfmt, std::forward<Args>(args)...));
         io::cout.put(strMessage);
+    }
+};
+
+struct InputSource {
+    std::string
+        strDescr;
+    std::shared_ptr<io::IStream>
+        sptrInput;
+    std::flat_set<intptr_t>
+        setNewLines;
+
+    intptr_t
+    CurLine() const noexcept {
+        return (intptr_t)this->setNewLines.size() + 1;
+    }
+
+    intptr_t
+    CurColumn() const noexcept {
+        intptr_t
+            iLastLF = (!this->setNewLines.empty())
+                ? *(this->setNewLines.cend() - 1)
+                : 0;
+        return this->sptrInput->GetPosition() - iLastLF + 1;
+    }
+
+    SourceLocation
+    Where() const {
+        return {
+            .strFrom    = this->strDescr,
+            .iLine      = this->CurLine(),
+            .iColumn    = this->CurColumn()
+        };
     }
 };
 
@@ -128,7 +144,7 @@ CaptureName(io::IStream& is, const patt::OptMatch& optMatch, const std::any& use
     else {
         auto&
             cur_source  = s->vecSources.back();
-        cur_source.Error("expected an identifier");
+        cur_source.Where().Error("expected an identifier");
     }
 }
 
@@ -141,7 +157,7 @@ CaptureValue(io::IStream& is, const patt::OptMatch& optMatch, const std::any& us
     else {
         auto&
             cur_source  = s->vecSources.back();
-        cur_source.Error("failed to parse macro value");
+        cur_source.Where().Error("failed to parse macro value");
     }
 }
 
@@ -158,7 +174,7 @@ HandleMacroUnexpected(io::IStream&, const patt::OptMatch& optMatch, const std::a
         auto
             cur_source  = state->vecSources.back();
 
-        cur_source.Error("unexpected new line");
+        cur_source.Where().Error("unexpected new line");
     }
 }
 
@@ -187,7 +203,7 @@ ExpandMacro(io::IStream& is, const patt::OptMatch& optMatch, const std::any& use
         auto
             itMacro     = state->mapGlobalMacros.find(strMacro);
         if (itMacro != state->mapGlobalMacros.end()) {
-            cur_source.Message("found macro ${}, expanding", strMacro);
+            cur_source.Where().Message("found macro ${}, expanding", strMacro);
             
             io::IOBufferStream
                 buffInner;
@@ -205,7 +221,7 @@ ExpandMacro(io::IStream& is, const patt::OptMatch& optMatch, const std::any& use
                     buffInner));
         }
         else
-            cur_source.Error("macro ${} doesnt exist", strMacro);
+            cur_source.Where().Error("macro ${} doesnt exist", strMacro);
     }
 }
 
@@ -218,7 +234,7 @@ HandleMacro(io::IStream& is, const patt::OptMatch& optMatch, const std::any& use
 
         std::string
             strMacro    = state->pa.strName;
-        cur_source.Message("start expanding macro ${}", strMacro);
+        cur_source.Where().Message("start expanding macro ${}", strMacro);
         
         io::IOBufferStream
            buff;
@@ -232,10 +248,10 @@ HandleMacro(io::IStream& is, const patt::OptMatch& optMatch, const std::any& use
                 .go_start()
                 .forward_to(strExpandedMacro);
             
-            cur_source.Message("expanded macro ${} to [{}]", strMacro, strExpandedMacro);
+            cur_source.Where().Message("expanded macro ${} to [{}]", strMacro, strExpandedMacro);
         }
         else
-            cur_source.Error("failed to handle macro ${}", strMacro);
+            cur_source.Where().Error("failed to handle macro ${}", strMacro);
     }
 }
 
@@ -250,10 +266,10 @@ HandleDefine(io::IStream& is, const patt::OptMatch& optMatch, const std::any& us
             strMatch    = optMatch->GetString(is);
         if (strMatch.ends_with('\n'))
             strMatch.pop_back();
-        cur_source.Message("found command: [#{}]", strMatch);
+        cur_source.Where().Message("found command: [#{}]", strMatch);
 
         if (s->mapGlobalMacros.contains(s->pa.strName))
-            cur_source.Error("${} macro is already defined", s->pa.strName);
+            cur_source.Where().Error("${} macro is already defined", s->pa.strName);
 
         s->mapGlobalMacros.emplace(
             std::move(s->pa.strName),
@@ -279,12 +295,12 @@ HandleUndef(io::IStream& is, const std::optional<patt::Match>& optMatch, const s
             strMatch    = optMatch->GetString(is);
         if (strMatch.ends_with('\n'))
             strMatch.pop_back();
-        cur_source.Message("found command: [#{}]", strMatch);
+        cur_source.Where().Message("found command: [#{}]", strMatch);
         
         auto
             itMacro     = s->mapGlobalMacros.find(s->pa.strName);
         if (itMacro == s->mapGlobalMacros.end())
-            cur_source.Error("cannot remove non-existing macro {}", s->pa.strName);
+            cur_source.Where().Error("cannot remove non-existing macro {}", s->pa.strName);
 
         s->mapGlobalMacros.erase(itMacro);
     }
@@ -301,7 +317,7 @@ HandleCommands(io::IStream&, const std::optional<patt::Match>& optMatch, const s
     if (!optMatch) {
         auto&
             cur_source  = std::any_cast<PPState*>(user_value)->vecSources.back();
-        cur_source.Error("unrecognized macro command");
+        cur_source.Where().Error("unrecognized macro command");
     }
 };
 
@@ -344,7 +360,7 @@ TestPatterns() {
         if (!optMatch) {
             auto&
                 cur_source  = state.vecSources.back();
-            cur_source.Error("failed to parse input text");
+            cur_source.Where().Error("failed to parse input text");
         }
         
         io::cout.put("Macro constants:\n");
