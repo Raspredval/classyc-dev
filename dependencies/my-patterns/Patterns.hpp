@@ -134,7 +134,7 @@ namespace patt {
             virtual ~Pattern()      = default;
 
             OptMatch
-            Eval(io::IStream& is, const std::any& user_data = {}) const noexcept {
+            Eval(io::IStream& is, const std::any& user_data = {}) const {
                 return (this->bNegated)
                     ? this->negEval(is, user_data)
                     : this->normEval(is, user_data);
@@ -155,10 +155,10 @@ namespace patt {
         
         protected:
             virtual OptMatch
-            normEval(io::IStream& is, const std::any& user_data) const noexcept = 0;
+            normEval(io::IStream& is, const std::any& user_data) const = 0;
 
             virtual OptMatch
-            negEval(io::IStream& is, const std::any& user_data) const noexcept {
+            negEval(io::IStream& is, const std::any& user_data) const {
                 intptr_t
                     iCurr   = is.GetPosition();
                 auto
@@ -196,7 +196,7 @@ namespace patt {
 
         private:
             OptMatch
-            normEval(io::IStream &is, const std::any&) const noexcept override {
+            normEval(io::IStream &is, const std::any&) const override {
                 intptr_t
                     iBegin  = is.GetPosition();
         
@@ -231,7 +231,7 @@ namespace patt {
 
         private:
             OptMatch
-            normEval(io::IStream& is, const std::any&) const noexcept override {
+            normEval(io::IStream& is, const std::any&) const override {
                 intptr_t
                     iBegin  = is.GetPosition();
                 auto optc   = is.Read();
@@ -262,7 +262,7 @@ namespace patt {
         
         private:
             OptMatch
-            normEval(io::IStream& is, const std::any& user_data) const noexcept override {
+            normEval(io::IStream& is, const std::any& user_data) const override {
                 auto
                     optLhs  = this->lhs->Eval(is, user_data);
                 if (!optLhs)
@@ -299,7 +299,7 @@ namespace patt {
         
         private:
             OptMatch
-            normEval(io::IStream& is, const std::any&) const noexcept override {
+            normEval(io::IStream& is, const std::any&) const override {
                 intptr_t
                     iBegin  = is.GetPosition();
                 
@@ -326,7 +326,7 @@ namespace patt {
         
         private:
             OptMatch
-            normEval(io::IStream& is, const std::any& user_data) const noexcept override {
+            normEval(io::IStream& is, const std::any& user_data) const override {
                 intptr_t
                     iBegin      = is.GetPosition();
                 OptMatch
@@ -382,7 +382,7 @@ namespace patt {
         
         private:
             OptMatch
-            normEval(io::IStream& is, const std::any& user_data) const noexcept override {
+            normEval(io::IStream& is, const std::any& user_data) const override {
                 OptMatch
                     optMatch    = this->pattern->Eval(is, user_data);
                 this->fnCallback(is, optMatch, user_data);
@@ -422,7 +422,7 @@ namespace patt {
         
         private:
             OptMatch
-            normEval(io::IStream& is, const std::any&) const noexcept override {
+            normEval(io::IStream& is, const std::any&) const override {
                 intptr_t
                     iBegin  = is.GetPosition();
                 
@@ -454,7 +454,7 @@ namespace patt {
 
         private:
             OptMatch
-            normEval(io::IStream& is, const std::any& user_data) const noexcept override {
+            normEval(io::IStream& is, const std::any& user_data) const override {
                 intptr_t
                     iBegin  = is.GetPosition();
                 for (size_t i = 0; i != this->uCount; ++i) {
@@ -477,7 +477,7 @@ namespace patt {
             }
 
             OptMatch
-            negEval(io::IStream& is, const std::any& user_data) const noexcept override {
+            negEval(io::IStream& is, const std::any& user_data) const override {
                 intptr_t
                     iBegin  = is.GetPosition();
                 for (size_t i = 0; i != this->uCount; ++i) {
@@ -527,7 +527,7 @@ namespace patt {
         
         private:
             OptMatch
-            normEval(io::IStream& is, const std::any& user_data) const noexcept override {
+            normEval(io::IStream& is, const std::any& user_data) const override {
                 intptr_t
                     iBegin  = is.GetPosition();
                 for (size_t i = 0; i != this->uCount; ++i) {
@@ -627,7 +627,7 @@ namespace patt {
 
         private:
             OptMatch
-            normEval(io::IStream& is, const std::any& user_data) const noexcept override {
+            normEval(io::IStream& is, const std::any& user_data) const override {
                 const patt::Pattern&
                     pattern = this->itPattern->second;
                 if (pattern == nullptr)
@@ -657,7 +657,7 @@ namespace patt {
 
         private:
             OptMatch
-            normEval(io::IStream& is, const std::any& user_data) const noexcept override {
+            normEval(io::IStream& is, const std::any& user_data) const override {
                 auto
                     optMatch    = this->pattern->Eval(is, user_data);
                 if (optMatch) {
@@ -704,7 +704,7 @@ namespace patt {
 
         private:
             OptMatch
-            normEval(io::IStream& is, const std::any& user_data) const noexcept override {
+            normEval(io::IStream& is, const std::any& user_data) const override {
                 auto
                     optMatch    = this->pattern->Eval(is, user_data);
                 if (optMatch) {
@@ -741,7 +741,7 @@ namespace patt {
             
         private:
             OptMatch
-            normEval(io::IStream& is, const std::any& user_data) const noexcept override {
+            normEval(io::IStream& is, const std::any& user_data) const override {
                 auto
                     optMatch    = this->pattern->Eval(is, user_data);
                 if (optMatch)
@@ -774,7 +774,7 @@ namespace patt {
 
         private:
             OptMatch
-            normEval(io::IStream& is, const std::any& user_data) const noexcept override {
+            normEval(io::IStream& is, const std::any& user_data) const override {
                 intptr_t
                     iCurr       = is.GetPosition();
                 auto
@@ -874,7 +874,7 @@ namespace patt {
 
     [[nodiscard]]
     inline OptMatch
-    Eval(const Pattern& p, io::IStream& is, const std::any& user_data = {}) noexcept {
+    Eval(const Pattern& p, io::IStream& is, const std::any& user_data = {}) {
         return p->Eval(is, user_data);
     }
 }
