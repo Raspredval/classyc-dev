@@ -4,8 +4,9 @@
 
 // redefine $AGE
 #undef  AGE
-#define TRUE_AGE    16
-#define AGE         $TRUE_AGE
+#define SIX         6
+#define SEVEN       7
+#define AGE         $SIX or $SEVEN
 
 // print $NAME and $AGE
 print("Name:\t{}\nAge:\t{}\n", $NAME, $AGE)
