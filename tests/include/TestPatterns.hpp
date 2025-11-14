@@ -8,6 +8,7 @@
 #include <my-iostreams/TextIO.hpp>
 #include <my-patterns/Patterns.hpp>
 #include <stdexcept>
+#include <string>
 
 struct InputSource {
     std::string
@@ -161,23 +162,99 @@ CaptureValue(io::IStream& is, const patt::OptMatch& optMatch, const std::any& us
     }
 }
 
+const patt::Pattern
+    ptMacro         = (patt::Str("$") >> ptIdentifier / CaptureName);
+
 static void
-HandleMacro(io::IStream&, const patt::OptMatch& optMatch, const std::any& user_data) {
+ExpandMacro(io::IStream& is, const patt::OptMatch& optMatch, const std::any& user_data);
+
+static void
+HandleMacroUnexpected(io::IStream&, const patt::OptMatch& optMatch, const std::any& user_data) {
     if (optMatch) {
         auto* state     = std::any_cast<PPState*>(user_data);
-
-        // TODO: expand macro here
-        // io::IOBufferStream
-        //    buff;
-        // optMatch->Forward(is, buff);
-        auto&
+        auto
             cur_source  = state->vecSources.back();
-        cur_source.Message("found macro ${}", state->pa.strName);
+
+        cur_source.Error("unexpected new line");
     }
 }
 
 const patt::Pattern
-    ptMacro         = (patt::Str("$") >> ptIdentifier / CaptureName) / HandleMacro;
+    ptMacroUnexpected   = (patt::Set("#\n") |= patt::Str("//")) / HandleMacroUnexpected;
+
+const patt::Pattern
+    ptExpandMacros  =
+        (-ptMacroUnexpected >> (
+            ((-patt::Set("$\"\'\n") >> patt::Any()) % 1) |=
+            (ptMacro / ExpandMacro) |=
+            ptStringLiteral |= ptCharLiteral)
+        ) % 0 >> patt::None();
+
+static void
+ExpandMacro(io::IStream& is, const patt::OptMatch& optMatch, const std::any& user_data) {
+    if (optMatch) {
+        auto&
+            buffOuter   = (io::IOBufferStream&)is;
+        auto* state     = std::any_cast<PPState*>(user_data);
+        auto&
+            cur_source  = state->vecSources.back();
+    
+        const std::string&
+            strMacro    = state->pa.strName;
+        auto
+            itMacro     = state->mapGlobalMacros.find(strMacro);
+        if (itMacro != state->mapGlobalMacros.end()) {
+            cur_source.Message("found macro ${}, expanding", strMacro);
+            
+            io::IOBufferStream
+                buffInner;
+            io::TextIO(buffInner)
+                .put(itMacro->second)
+                .go_start();
+            
+            ptExpandMacros->Eval(buffInner, user_data);
+            
+            buffInner.SetPosition(0);
+            buffOuter.SetPosition(
+                buffOuter.Replace(
+                    optMatch->Begin(),
+                    optMatch->End(),
+                    buffInner));
+        }
+        else
+            cur_source.Error("macro ${} doesnt exist", strMacro);
+    }
+}
+
+static void
+HandleMacro(io::IStream& is, const patt::OptMatch& optMatch, const std::any& user_data) {
+    if (optMatch) {
+        auto* state     = std::any_cast<PPState*>(user_data);
+        auto&
+            cur_source  = state->vecSources.back();
+
+        std::string
+            strMacro    = state->pa.strName;
+        cur_source.Message("start expanding macro ${}", strMacro);
+        
+        io::IOBufferStream
+           buff;
+        optMatch->Forward(is, buff);
+        buff.SetPosition(0);
+
+        if (ptExpandMacros->Eval(buff, user_data)) {
+            std::string
+                strExpandedMacro;
+            io::TextIO(buff)
+                .go_start()
+                .forward_to(strExpandedMacro);
+            
+            cur_source.Message("expanded macro ${} to [{}]", strMacro, strExpandedMacro);
+        }
+        else
+            cur_source.Error("failed to handle macro ${}", strMacro);
+    }
+}
 
 static void
 HandleDefine(io::IStream& is, const patt::OptMatch& optMatch, const std::any& user_data) {
@@ -206,7 +283,7 @@ const patt::Pattern
         patt::Str("define") >> ptSpacing >>
         ptIdentifier / CaptureName >> ptSpacing >>
         ((-ptEndOfLine >> patt::Any()) % 1) / CaptureValue >>
-        &ptEndOfLine) / HandleDefine;
+        ptOptSpacing >> &ptEndOfLine) / HandleDefine;
 
 static void
 HandleUndef(io::IStream& is, const std::optional<patt::Match>& optMatch, const std::any& user_data) {
@@ -259,7 +336,7 @@ const patt::Pattern
         (-patt::Set("#$\"\'\n") >> -patt::Str("//") >> patt::Any()) % 1;
 const patt::Pattern
     ptPreprocessor      = ptOptMacroCommand >> (
-        ptSourceText |= (ptLineFeed >> ptOptMacroCommand) |= ptMacro |= ptStringLiteral |= ptCharLiteral |= ptLineComment
+        ptSourceText |= (ptLineFeed >> ptOptMacroCommand) |= ptMacro / HandleMacro |= ptStringLiteral |= ptCharLiteral |= ptLineComment
     ) % 0 >> patt::None();
 
 inline int
