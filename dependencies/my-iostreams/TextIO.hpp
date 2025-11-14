@@ -387,7 +387,7 @@ namespace io {
             forward_to(this const auto& self, io::SerialOStream& to, size_t uCount = SIZE_MAX) {
                 for (size_t i = 0; i != uCount; ++i) {
                     std::optional<std::byte>
-                        optc    = self.Stream().Read();
+                        optc    = self.stream().Read();
                     if (!optc)
                         break;
 
@@ -401,7 +401,7 @@ namespace io {
             forward_to(this const auto& self, std::string& to, size_t uCount = SIZE_MAX) {
                 for (size_t i = 0; i != uCount; ++i) {
                     std::optional<std::byte>
-                        optc    = self.Stream().Read();
+                        optc    = self.stream().Read();
                     if (!optc)
                         break;
 
