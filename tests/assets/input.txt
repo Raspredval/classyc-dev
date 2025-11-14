@@ -3,7 +3,7 @@
 #define AGE    12
 
 // redefine $AGE
-#undef  AGE
+// #undef  AGE
 #define AGE    16
 
 // print $NAME and $AGE
