@@ -3,6 +3,8 @@
 
 int
 main(int argc, const char* argv[]) {
+    io::cout.put("CTEST_FULL_OUTPUT\n");
+    
     if (argc != 2) {
         io::cerr.fmt("invalid arg count, expected 1, got {}\n", argc - 1);
         return EXIT_FAILURE;
