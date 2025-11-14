@@ -19,32 +19,16 @@ struct InputSource {
 
     intptr_t
     CurLine() {
-        intptr_t
-            iCurline    = (intptr_t)this->setNewLines.size() + 1,
-            iLastLF     = (this->setNewLines.size() > 0)
-                            ? *(this->setNewLines.cend() - 1)
-                            : 0;
-        if (this->sptrInput->GetPosition() < iLastLF)
-            iCurline    -= 1;
-
-        return iCurline;
+        return (intptr_t)this->setNewLines.size() + 1;
     }
 
     intptr_t
     CurColumn() {
         intptr_t
-            iCurColumn  = this->sptrInput->GetPosition(),
-            iLastLF     = (this->setNewLines.size() > 0)
-                            ? *(this->setNewLines.cend() - 1)
-                            : 0;
-        if (this->sptrInput->GetPosition() < iLastLF) {
-            iLastLF     = (this->setNewLines.size() > 1)
-                            ? *(this->setNewLines.cend() - 2)
-                            : 0;
-        }
-
-        
-        return iCurColumn - iLastLF + 1;
+            iLastLF = (!this->setNewLines.empty())
+                ? *(this->setNewLines.cend() - 1)
+                : 0;
+        return this->sptrInput->GetPosition() - iLastLF + 1;
     }
 
     template<typename... Args>
@@ -109,7 +93,7 @@ const patt::Pattern
         (patt::Alnum() |= patt::Str("_")) % 0;
 
 static void
-HandleNewLine(io::IStream&, const patt::OptMatch& optMatch, const std::any& user_data) {
+CountNewLine(io::IStream&, const patt::OptMatch& optMatch, const std::any& user_data) {
     if (optMatch) {
         auto* state     = std::any_cast<PPState*>(user_data);
         auto&
@@ -120,7 +104,7 @@ HandleNewLine(io::IStream&, const patt::OptMatch& optMatch, const std::any& user
 };
 
 const patt::Pattern
-    ptLineFeed  = (patt::Str("\n")) / HandleNewLine,
+    ptLineFeed  = (patt::Str("\n")),
     ptEndOfLine = patt::None() |= ptLineFeed;
 
 const patt::Pattern
@@ -335,7 +319,7 @@ const patt::Pattern
         (-patt::Set("#$\"\'\n") >> -patt::Str("//") >> patt::Any()) % 1;
 const patt::Pattern
     ptPreprocessor      = ptOptMacroCommand >> (
-        ptSourceText |= (ptLineFeed >> ptOptMacroCommand) |= ptMacro / HandleMacro |= ptStringLiteral |= ptCharLiteral |= ptLineComment
+        ptSourceText |= (ptLineFeed / CountNewLine >> ptOptMacroCommand) |= ptMacro / HandleMacro |= ptStringLiteral |= ptCharLiteral |= ptLineComment
     ) % 0 >> patt::None();
 
 inline int
@@ -365,7 +349,7 @@ TestPatterns() {
         
         io::cout.put("Macro constants:\n");
         for (const auto& [strKey, strValue] : state.mapGlobalMacros) {
-            io::cout.fmt(" > {}: {}\n", strKey, strValue);
+            io::cout.fmt(" > {}: [{}]\n", strKey, strValue);
         }
     }
     catch (const std::exception& err) {
