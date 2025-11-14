@@ -141,6 +141,15 @@ namespace io {
 
                 return self;
             }
+
+            const auto&
+            forward_from(this const auto& self, std::string& from, size_t uCount = SIZE_MAX) {
+                for (size_t i = 0; i != std::min(uCount, from.size()); ++i) {
+                    self.stream().Write((std::byte)from[i]);
+                }
+
+                return self;
+            }
         };
 
         class SerialTextInput {
@@ -383,6 +392,20 @@ namespace io {
                         break;
 
                     to.Write(*optc);
+                }
+
+                return self;
+            }
+
+            const auto&
+            forward_to(this const auto& self, std::string& to, size_t uCount = SIZE_MAX) {
+                for (size_t i = 0; i != uCount; ++i) {
+                    std::optional<std::byte>
+                        optc    = self.Stream().Read();
+                    if (!optc)
+                        break;
+
+                    to.push_back((char)*optc);
                 }
 
                 return self;
