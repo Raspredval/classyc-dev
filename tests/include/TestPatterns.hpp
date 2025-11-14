@@ -1,7 +1,4 @@
 #pragma once
-#include "my-iostreams/IOStreams.hpp"
-#include <any>
-#include <format>
 #include <my-iostreams/ConsoleStreams.hpp>
 #include <my-iostreams/BufferStreams.hpp>
 #include <my-iostreams/FileStreams.hpp>
@@ -9,6 +6,8 @@
 #include <my-patterns/Patterns.hpp>
 #include <stdexcept>
 #include <string>
+#include <format>
+#include <any>
 
 struct InputSource {
     std::string
