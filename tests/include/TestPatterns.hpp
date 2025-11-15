@@ -1,4 +1,6 @@
 #pragma once
+#include "my-iostreams/IOStreams.hpp"
+#include <memory>
 #include <my-iostreams/ConsoleStreams.hpp>
 #include <my-iostreams/BufferStreams.hpp>
 #include <my-iostreams/FileStreams.hpp>
@@ -55,31 +57,23 @@ struct SourceLocation {
 struct InputSource {
     std::string
         strDescr;
-    std::shared_ptr<io::IStream>
-        sptrInput;
+    std::unique_ptr<io::IStream>
+        uptrInput;
     std::flat_set<intptr_t>
         setNewLines;
 
-    intptr_t
-    CurLine() const noexcept {
-        return (intptr_t)this->setNewLines.size() + 1;
-    }
-
-    intptr_t
-    CurColumn() const noexcept {
-        intptr_t
-            iLastLF = (!this->setNewLines.empty())
-                ? *(this->setNewLines.cend() - 1)
-                : 0;
-        return this->sptrInput->GetPosition() - iLastLF + 1;
-    }
-
     SourceLocation
     Where() const {
+        intptr_t
+            iCurPos     = this->uptrInput->GetPosition(),
+            iLine       = (intptr_t)this->setNewLines.size() + 1,
+            iLastLF     = (!this->setNewLines.empty())
+                            ? *(this->setNewLines.cend() - 1)
+                            : 0;
         return {
             .strFrom    = this->strDescr,
-            .iLine      = this->CurLine(),
-            .iColumn    = this->CurColumn()
+            .iLine      = iLine,
+            .iColumn    = iCurPos - iLastLF + 1
         };
     }
 };
@@ -115,7 +109,7 @@ CountNewLine(io::IStream&, const patt::OptMatch& optMatch, const std::any& user_
         auto&
             cur_source  = state->vecSources.back();
         cur_source.setNewLines.emplace(
-            cur_source.sptrInput->GetPosition());
+            cur_source.uptrInput->GetPosition());
     }
 };
 
@@ -171,7 +165,7 @@ static void
 HandleMacroUnexpected(io::IStream&, const patt::OptMatch& optMatch, const std::any& user_data) {
     if (optMatch) {
         auto* state     = std::any_cast<PPState*>(user_data);
-        auto
+        auto&
             cur_source  = state->vecSources.back();
 
         cur_source.Where().Error("unexpected new line");
@@ -193,7 +187,7 @@ static void
 ExpandMacro(io::IStream& is, const patt::OptMatch& optMatch, const std::any& user_data) {
     if (optMatch) {
         auto&
-            buffOuter   = (io::IOBufferStream&)is;
+            buffOuter   = dynamic_cast<io::IOBufferStream&>(is);
         auto* state     = std::any_cast<PPState*>(user_data);
         auto&
             cur_source  = state->vecSources.back();
@@ -343,20 +337,16 @@ TestPatterns() {
     io::cout.put("Testing Patterns:\n");
     
     PPState
-    state           = {};
+        state           = {};
     std::string
         strFilename = "./assets/input.txt";
-    auto
-        sptrInput   = std::make_shared<io::IFileStream>(strFilename);
 
-    state.vecSources.push_back({
-        .strDescr       = strFilename,
-        .sptrInput      = sptrInput,
-        .setNewLines    = {}
-    });
+    state.vecSources.emplace_back(
+        strFilename,
+        std::make_unique<io::IFileStream>(strFilename));
     try {
         auto
-            optMatch    = ptPreprocessor->Eval(*sptrInput, &state);
+            optMatch    = ptPreprocessor->Eval(*state.vecSources.back().uptrInput, &state);
         if (!optMatch) {
             auto&
                 cur_source  = state.vecSources.back();
