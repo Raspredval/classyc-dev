@@ -21,7 +21,7 @@ struct SourceLocation {
     [[noreturn]] void
     Error(const std::format_string<Args...>& strfmt, Args&&... args) {
         std::string
-            strMessage  = std::format("[{}: Ln {}, Col {}]\n > 🚫 Error: {} 🚫\n",
+            strMessage  = std::format("[{}: Ln {}, Col {}]\n > 🚫 Error: {} 🚫",
                             this->strFrom,
                             this->iLine,
                             this->iColumn,
@@ -33,24 +33,24 @@ struct SourceLocation {
     void
     Warning(const std::format_string<Args...>& strfmt, Args&&... args) {
         std::string
-            strMessage  = std::format("[{}: Ln {}, Col {}]\n > ⚠️ Warning: {} ⚠️\n",
+            strMessage  = std::format("[{}: Ln {}, Col {}]\n > ⚠️ Warning: {} ⚠️",
                             this->strFrom,
                             this->iLine,
                             this->iColumn,
                             std::format(strfmt, std::forward<Args>(args)...));
-        io::cerr.put(strMessage);
+        io::cerr.put(strMessage).put_endl();
     }
 
     template<typename... Args>
     void
     Message(const std::format_string<Args...>& strfmt, Args&&... args) {
         std::string
-            strMessage  = std::format("[{}: Ln {}, Col {}]\n > 📨 {}\n",
+            strMessage  = std::format("[{}: Ln {}, Col {}]\n > 📨 {}",
                             this->strFrom,
                             this->iLine,
                             this->iColumn,
                             std::format(strfmt, std::forward<Args>(args)...));
-        io::cout.put(strMessage);
+        io::cout.put(strMessage).put_endl();
     }
 };
 
@@ -164,7 +164,8 @@ ExpandMacro(io::IStream& is, const patt::OptMatch& optMatch, const std::any& use
 static void
 HandleMacroUnexpected(io::IStream&, const patt::OptMatch& optMatch, const std::any& user_data) {
     if (optMatch) {
-        auto* state     = std::any_cast<PPState*>(user_data);
+        auto*
+            state       = std::any_cast<PPState*>(user_data);
         auto&
             cur_source  = state->vecSources.back();
 
@@ -188,7 +189,8 @@ ExpandMacro(io::IStream& is, const patt::OptMatch& optMatch, const std::any& use
     if (optMatch) {
         auto&
             buffOuter   = dynamic_cast<io::IOBufferStream&>(is);
-        auto* state     = std::any_cast<PPState*>(user_data);
+        auto*
+            state       = std::any_cast<PPState*>(user_data);
         auto&
             cur_source  = state->vecSources.back();
     
@@ -359,7 +361,7 @@ TestPatterns() {
         }
     }
     catch (const std::exception& err) {
-        io::cerr.put(err.what());
+        io::cerr.put(err.what()).put_endl();
         return EXIT_FAILURE;
     }
 
