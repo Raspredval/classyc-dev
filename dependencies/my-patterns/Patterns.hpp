@@ -3,6 +3,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <cassert>
 #include <flat_set>
 #include <optional>
 #include <functional>
@@ -27,7 +28,7 @@ namespace patt {
             iBegin(0), iEnd(0) {}
 
         Match(intptr_t iBegin, intptr_t iEnd) :
-            iBegin(iBegin), iEnd(iEnd) {}
+            iBegin(iBegin), iEnd(iEnd) { assert(iEnd >= iBegin); }
 
         intptr_t
         Begin() const noexcept {
