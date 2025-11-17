@@ -45,3 +45,6 @@ add_test(
 add_test(
     NAME    classyc-test-patterns
     COMMAND classyc-tests "--patterns")
+add_test(
+    NAME    classyc-test-proto-preproc
+    COMMAND classyc-tests "--proto-preproc")

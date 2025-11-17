@@ -1,3 +1,4 @@
+#include "ProtoPreprocessor.hpp"
 #include "TestPatterns.hpp"
 #include "TestTextIO.hpp"
 
@@ -12,6 +13,8 @@ main(int argc, const char* argv[]) {
 
     std::string_view
         strvTest    = argv[1];
+    if (strvTest == "--proto-preproc")
+        return ProtoPreproc();
     if (strvTest == "--patterns")
         return TestPatterns();
     else if (strvTest == "--text-io")
