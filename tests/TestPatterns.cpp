@@ -12,11 +12,12 @@ HandleCommand(io::IStream& is, const patt::OptMatch& optMatch, const std::any& u
     if (optMatch) {
         patt::OptMatch
             optIDMatch  = ptIdentifier->Eval(is, user_value);
-        if (optIDMatch) {
-            std::string
-                strIdentifier   = optIDMatch->GetString(is);
-            io::cout.fmt("Parsed ID: {}\n", strIdentifier);
-        }
+        if (!optIDMatch)
+            throw std::runtime_error("failed to parse identifier");
+        
+        std::string
+            strIdentifier   = optIDMatch->GetString(is);
+        io::cout.fmt("Parsed ID: {}\n", strIdentifier);
     }
 }
 
@@ -36,13 +37,17 @@ main() {
         .put("#fancy_name")
         .go_start();
 
-    patt::OptMatch
-        optmCommand = ptCommand->Eval(buffTest);
-    if (!optmCommand) {
-        io::cerr.put("Failed to match command\n");
+    try {
+        patt::OptMatch
+            optCommandMatch = ptCommand->Eval(buffTest);
+        if (!optCommandMatch)
+            throw std::runtime_error("failed to match command");
+
+        io::cout.put("parsing from the handler callback was successfull\n");
+        return EXIT_SUCCESS;
+    }
+    catch(const std::exception& exc) {
+        io::cerr.put(exc.what()).put_endl();
         return EXIT_FAILURE;
     }
-
-    io::cout.put("Parsing from the handler callback was successfull\n");
-    return EXIT_SUCCESS;
 }

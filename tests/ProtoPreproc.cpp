@@ -335,6 +335,7 @@ const patt::Pattern
 
 extern int
 main() {
+    io::cout.put("CTEST_FULL_OUTPUT\n");
     io::cout.put("Proto preprocessor:\n");
     
     PPState
