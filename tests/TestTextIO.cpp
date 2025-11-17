@@ -1,10 +1,10 @@
-#pragma once
 #include <my-iostreams/TextIO.hpp>
 #include <my-iostreams/BufferStreams.hpp>
 #include <my-iostreams/ConsoleStreams.hpp>
 
-inline int
-TestTextIO() {
+extern int
+main() {
+    io::cout.put("CTEST_FULL_OUTPUT\n");
     io::cout.put("Testing TextIO:\n");
 
     std::string

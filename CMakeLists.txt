@@ -16,14 +16,36 @@ target_compile_options(classyc
     PRIVATE
         "-Wall" "-Wextra" "-Wconversion" "-Werror")
 
-add_executable(classyc-tests
-    "tests/tests.cpp")
-target_include_directories(classyc-tests
+add_executable(classyc-test-patterns
+    "tests/TestPatterns.cpp")
+target_include_directories(classyc-test-patterns
     PRIVATE
         "include/"
         "tests/include"
         "dependencies/")
-target_compile_options(classyc-tests
+target_compile_options(classyc-test-patterns
+    PRIVATE
+        "-Wall" "-Wextra" "-Wconversion" "-Werror")
+
+add_executable(classyc-test-text-io
+    "tests/TestTextIO.cpp")
+target_include_directories(classyc-test-text-io
+    PRIVATE
+        "include/"
+        "tests/include"
+        "dependencies/")
+target_compile_options(classyc-test-text-io
+    PRIVATE
+        "-Wall" "-Wextra" "-Wconversion" "-Werror")
+
+add_executable(classyc-proto-preproc
+    "tests/ProtoPreproc.cpp")
+target_include_directories(classyc-proto-preproc
+    PRIVATE
+        "include/"
+        "tests/include"
+        "dependencies/")
+target_compile_options(classyc-proto-preproc
     PRIVATE
         "-Wall" "-Wextra" "-Wconversion" "-Werror")
 
@@ -34,17 +56,22 @@ add_custom_command(
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_SOURCE_DIR}/create_symlink.cmake ${ASSETS_DIR} ${ASSETS_LINK})
 add_custom_target(create_assets_symlink
     DEPENDS ${ASSETS_LINK})
-add_dependencies(classyc-tests
+
+add_dependencies(classyc-test-patterns
+    create_assets_symlink)
+add_dependencies(classyc-test-text-io
+    create_assets_symlink)
+add_dependencies(classyc-proto-preproc
     create_assets_symlink)
 
 include(CTest)
 
 add_test(
     NAME    classyc-test-text-io
-    COMMAND classyc-tests "--text-io")
+    COMMAND classyc-test-text-io)
 add_test(
     NAME    classyc-test-patterns
-    COMMAND classyc-tests "--patterns")
+    COMMAND classyc-test-patterns)
 add_test(
-    NAME    classyc-test-proto-preproc
-    COMMAND classyc-tests "--proto-preproc")
+    NAME    classyc-proto-preproc
+    COMMAND classyc-proto-preproc)

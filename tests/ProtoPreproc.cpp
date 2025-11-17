@@ -1,4 +1,3 @@
-#pragma once
 #include "my-iostreams/IOStreams.hpp"
 #include <my-iostreams/ConsoleStreams.hpp>
 #include <my-iostreams/BufferStreams.hpp>
@@ -334,8 +333,8 @@ const patt::Pattern
         ptSourceText |= (ptLineFeed / CountNewLine >> ptOptMacroCommand) |= ptMacro / HandleMacro |= ptStringLiteral |= ptCharLiteral |= ptLineComment
     ) % 0 >> patt::None();
 
-inline int
-ProtoPreproc() {
+extern int
+main() {
     io::cout.put("Proto preprocessor:\n");
     
     PPState
