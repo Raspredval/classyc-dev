@@ -5,16 +5,17 @@ project(classyc-dev LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(WARNINGS_FLAGS "-Wall" "-Wextra" "-Wconversion" "-Werror")
+
 add_executable(classyc
     "source/main.cpp")
-
 target_include_directories(classyc
     PRIVATE
         "include/"
         "dependencies/")
 target_compile_options(classyc
     PRIVATE
-        "-Wall" "-Wextra" "-Wconversion" "-Werror")
+        ${WARNINGS_FLAGS})
 
 add_executable(classyc-test-patterns
     "tests/TestPatterns.cpp")
@@ -25,7 +26,7 @@ target_include_directories(classyc-test-patterns
         "dependencies/")
 target_compile_options(classyc-test-patterns
     PRIVATE
-        "-Wall" "-Wextra" "-Wconversion" "-Werror")
+        ${WARNINGS_FLAGS})
 
 add_executable(classyc-test-text-io
     "tests/TestTextIO.cpp")
@@ -36,7 +37,7 @@ target_include_directories(classyc-test-text-io
         "dependencies/")
 target_compile_options(classyc-test-text-io
     PRIVATE
-        "-Wall" "-Wextra" "-Wconversion" "-Werror")
+        ${WARNINGS_FLAGS})
 
 add_executable(classyc-proto-preproc
     "tests/ProtoPreproc.cpp")
@@ -47,7 +48,7 @@ target_include_directories(classyc-proto-preproc
         "dependencies/")
 target_compile_options(classyc-proto-preproc
     PRIVATE
-        "-Wall" "-Wextra" "-Wconversion" "-Werror")
+        ${WARNINGS_FLAGS})
 
 set(ASSETS_DIR  "${CMAKE_CURRENT_SOURCE_DIR}/tests/assets")
 set(ASSETS_LINK "${CMAKE_CURRENT_BINARY_DIR}/assets")
