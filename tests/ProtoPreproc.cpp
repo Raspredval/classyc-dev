@@ -126,7 +126,7 @@ const patt::Pattern
             (patt::Str("\\") |= -patt::Str("\'")) >> patt::Any() >>
         patt::Str("\'"),
     ptLineComment   =
-        patt::Str("//") >> (-ptEndOfLine >> patt::Any()) % 0 >> &ptEndOfLine;
+        patt::Str("//") >> (patt::Any() - ptEndOfLine) % 0 >> &ptEndOfLine;
 
 static void
 CaptureName(io::IStream& is, const patt::OptMatch& optMatch, const std::any& user_data) {
@@ -178,7 +178,7 @@ const patt::Pattern
 const patt::Pattern
     ptExpandMacros  =
         (-ptMacroUnexpected >> (
-            ((-patt::Set("$\"\'\n") >> patt::Any()) % 1) |=
+            ((patt::Any() - patt::Set("$\"\'\n")) % 1) |=
             (ptMacro / ExpandMacro) |=
             ptStringLiteral |= ptCharLiteral)
         ) % 0 >> patt::None();
@@ -276,7 +276,7 @@ const patt::Pattern
     ptCmdDefine     = (
         patt::Str("define") >> ptSpacing >>
         ptIdentifier / CaptureName >> ptSpacing >>
-        ((-ptEndOfLine >> patt::Any()) % 1) / CaptureValue >>
+        ((patt::Any() - ptEndOfLine) % 1) / CaptureValue >>
         ptOptSpacing >> &ptEndOfLine) / HandleDefine;
 
 static void
@@ -327,7 +327,7 @@ const patt::Pattern
 
 const patt::Pattern
     ptSourceText        =
-        (-patt::Set("#$\"\'\n") >> -patt::Str("//") >> patt::Any()) % 1;
+        (patt::Any() - patt::Set("#$\"\'\n") - patt::Str("//") >> patt::Any()) % 1;
 const patt::Pattern
     ptPreprocessor      = ptOptMacroCommand >> (
         ptSourceText |= (ptLineFeed / CountNewLine >> ptOptMacroCommand) |= ptMacro / HandleMacro |= ptStringLiteral |= ptCharLiteral |= ptLineComment
