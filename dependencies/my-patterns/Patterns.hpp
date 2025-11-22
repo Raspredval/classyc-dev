@@ -287,6 +287,18 @@ namespace patt {
             return std::make_shared<ConcatPattern>(lhs, rhs);
         }
 
+        // lhs excluding rhs
+        [[nodiscard]] inline patt::Pattern
+        operator-(const patt::Pattern& lhs, const patt::Pattern& rhs) {
+            return -rhs >> lhs;
+        }
+
+        // lhs excluding rhs
+        [[nodiscard]] inline patt::Pattern
+        operator-(const patt::Pattern& lhs, patt::Pattern&& rhs) {
+            return -std::move(rhs) >> lhs;
+        }
+
         class AnyPattern :
             public Pattern {
         public:
