@@ -45,25 +45,6 @@ namespace patt {
             return (size_t)(this->iEnd - this->iBegin);
         }
 
-        size_t
-        Forward(io::IStream& from, io::OStream& to) {
-            intptr_t
-                iCurr   = from.GetPosition();
-            from.SetPosition(this->Begin());
-            
-            size_t i = 0;
-            while (i != this->Length()) {
-                std::optional<std::byte>
-                    optc    = from.Read();
-                if (!(optc && to.Write(*optc)))
-                    break;
-                i += 1;
-            }
-
-            from.SetPosition(iCurr);
-            return i;
-        }
-
         std::string
         GetString(io::IStream& is) const {
             intptr_t
@@ -91,6 +72,8 @@ namespace patt {
 
         size_t
         Forward(io::IStream& from, io::OStream& to) const {
+            assert(from != to);
+            
             intptr_t
                 iCurr       = from.GetPosition();
             from.SetPosition(this->iBegin);
