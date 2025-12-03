@@ -7,6 +7,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(WARNINGS_FLAGS "-Wall" "-Wextra" "-Wconversion" "-Werror")
 
+set(ASSETS_DIR  "${CMAKE_SOURCE_DIR}/tests/assets")
+set(ASSETS_LINK "${CMAKE_BINARY_DIR}/assets")
+file (CREATE_LINK ${ASSETS_DIR} ${ASSETS_LINK} SYMBOLIC)
+
 add_executable(classyc
     "source/main.cpp")
 target_include_directories(classyc
@@ -49,21 +53,6 @@ target_include_directories(classyc-proto-preproc
 target_compile_options(classyc-proto-preproc
     PRIVATE
         ${WARNINGS_FLAGS})
-
-set(ASSETS_DIR  "${CMAKE_CURRENT_SOURCE_DIR}/tests/assets")
-set(ASSETS_LINK "${CMAKE_CURRENT_BINARY_DIR}/assets")
-add_custom_command(
-    OUTPUT  ${ASSETS_LINK}
-    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_SOURCE_DIR}/create_symlink.cmake ${ASSETS_DIR} ${ASSETS_LINK})
-add_custom_target(create_assets_symlink
-    DEPENDS ${ASSETS_LINK})
-
-add_dependencies(classyc-test-patterns
-    create_assets_symlink)
-add_dependencies(classyc-test-text-io
-    create_assets_symlink)
-add_dependencies(classyc-proto-preproc
-    create_assets_symlink)
 
 include(CTest)
 
