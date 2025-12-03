@@ -20,7 +20,7 @@ struct SourceLocation {
     [[noreturn]] void
     Error(const std::format_string<Args...>& strfmt, Args&&... args) {
         std::string
-            strMessage  = std::format("[{}: Ln {}, Col {}]\n > 🚫 Error: {} 🚫",
+            strMessage  = std::format("[{}: Ln {}, Col {}]\n > Error: {}\a",
                             this->strFrom,
                             this->iLine,
                             this->iColumn,
@@ -32,7 +32,7 @@ struct SourceLocation {
     void
     Warning(const std::format_string<Args...>& strfmt, Args&&... args) {
         std::string
-            strMessage  = std::format("[{}: Ln {}, Col {}]\n > ⚠️ Warning: {} ⚠️",
+            strMessage  = std::format("[{}: Ln {}, Col {}]\n > Warning: {}\a",
                             this->strFrom,
                             this->iLine,
                             this->iColumn,
@@ -44,7 +44,7 @@ struct SourceLocation {
     void
     Message(const std::format_string<Args...>& strfmt, Args&&... args) {
         std::string
-            strMessage  = std::format("[{}: Ln {}, Col {}]\n > 📨 {}",
+            strMessage  = std::format("[{}: Ln {}, Col {}]\n > {}",
                             this->strFrom,
                             this->iLine,
                             this->iColumn,
@@ -294,10 +294,10 @@ HandleUndef(io::IStream& is, const std::optional<patt::Match>& optMatch, const s
         
         auto
             itMacro     = s->mapGlobalMacros.find(s->pa.strName);
-        if (itMacro == s->mapGlobalMacros.end())
-            cur_source.Where().Error("cannot remove non-existing macro {}", s->pa.strName);
-
-        s->mapGlobalMacros.erase(itMacro);
+        if (itMacro != s->mapGlobalMacros.end())
+            s->mapGlobalMacros.erase(itMacro);
+        else
+            cur_source.Where().Warning("cannot remove non-existing macro {}", s->pa.strName);
     }
 }
 

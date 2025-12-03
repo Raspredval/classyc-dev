@@ -2,6 +2,9 @@
 #define NAME        Pete
 #define AGE         12
 
+// checking warnings
+#undef  DONT_EXIST
+
 // redefine $AGE
 #undef  AGE
 #define SIX         6
