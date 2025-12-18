@@ -1,4 +1,4 @@
-#include <my-iostreams/ConsoleStreams.hpp>
+#include <classy-streams/ConsoleStreams.hpp>
 
 int
 main() {

@@ -1,6 +1,6 @@
-#include <my-iostreams/ConsoleStreams.hpp>
-#include <my-iostreams/BufferStreams.hpp>
-#include <my-patterns/Patterns.hpp>
+#include <classy-streams/ConsoleStreams.hpp>
+#include <classy-streams/BufferStreams.hpp>
+#include <classy-streams/Patterns.hpp>
 
 const patt::Pattern
     ptIdentifier    =

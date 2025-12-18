@@ -1,6 +1,6 @@
-#include <my-iostreams/TextIO.hpp>
-#include <my-iostreams/BufferStreams.hpp>
-#include <my-iostreams/ConsoleStreams.hpp>
+#include <classy-streams/TextIO.hpp>
+#include <classy-streams/BufferStreams.hpp>
+#include <classy-streams/ConsoleStreams.hpp>
 
 extern int
 main() {

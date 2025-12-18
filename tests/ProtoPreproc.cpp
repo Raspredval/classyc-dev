@@ -1,9 +1,9 @@
-#include "my-iostreams/IOStreams.hpp"
-#include <my-iostreams/ConsoleStreams.hpp>
-#include <my-iostreams/BufferStreams.hpp>
-#include <my-iostreams/FileStreams.hpp>
-#include <my-iostreams/TextIO.hpp>
-#include <my-patterns/Patterns.hpp>
+#include <classy-streams/IOStreams.hpp>
+#include <classy-streams/ConsoleStreams.hpp>
+#include <classy-streams/BufferStreams.hpp>
+#include <classy-streams/FileStreams.hpp>
+#include <classy-streams/TextIO.hpp>
+#include <classy-streams/Patterns.hpp>
 #include <stdexcept>
 #include <memory>
 #include <string>

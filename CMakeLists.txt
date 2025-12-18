@@ -15,8 +15,7 @@ add_executable(classyc
     "source/main.cpp")
 target_include_directories(classyc
     PRIVATE
-        "include/"
-        "dependencies/")
+        "include/")
 target_compile_options(classyc
     PRIVATE
         ${WARNINGS_FLAGS})
@@ -26,8 +25,7 @@ add_executable(classyc-test-patterns
 target_include_directories(classyc-test-patterns
     PRIVATE
         "include/"
-        "tests/include"
-        "dependencies/")
+        "tests/include")
 target_compile_options(classyc-test-patterns
     PRIVATE
         ${WARNINGS_FLAGS})
@@ -37,8 +35,7 @@ add_executable(classyc-test-text-io
 target_include_directories(classyc-test-text-io
     PRIVATE
         "include/"
-        "tests/include"
-        "dependencies/")
+        "tests/include")
 target_compile_options(classyc-test-text-io
     PRIVATE
         ${WARNINGS_FLAGS})
@@ -48,8 +45,7 @@ add_executable(classyc-proto-preproc
 target_include_directories(classyc-proto-preproc
     PRIVATE
         "include/"
-        "tests/include"
-        "dependencies/")
+        "tests/include")
 target_compile_options(classyc-proto-preproc
     PRIVATE
         ${WARNINGS_FLAGS})
