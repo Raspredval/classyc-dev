@@ -241,7 +241,7 @@ HandleMacro(io::IStream& is, const patt::OptMatch& optMatch, const std::any& use
                 strExpandedMacro;
             io::TextIO(buff)
                 .go_start()
-                .forward_to(strExpandedMacro);
+                .get_all(strExpandedMacro);
             
             cur_source.Where().Message("expanded macro ${} to [{}]", strMacro, strExpandedMacro);
         }
