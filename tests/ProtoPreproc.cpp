@@ -2,8 +2,8 @@
 #include <classy-streams/ConsoleStreams.hpp>
 #include <classy-streams/BufferStreams.hpp>
 #include <classy-streams/FileStreams.hpp>
-#include <classy-streams/TextIO.hpp>
-#include <classy-streams/Patterns.hpp>
+#include <classy-streams/IOReadWrite.hpp>
+#include <classy-patterns/Patterns.hpp>
 #include <stdexcept>
 #include <memory>
 #include <string>
